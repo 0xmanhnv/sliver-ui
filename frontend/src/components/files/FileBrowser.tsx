@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useRef } from 'react'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { sessionsApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,7 +50,6 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
-  const queryClient = useQueryClient()
 
   // Fetch directory listing
   const { data, isLoading, refetch } = useQuery({
@@ -76,6 +75,7 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
       document.body.removeChild(a)
       toast({ title: 'File downloaded successfully' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({ variant: 'destructive', title: 'Download failed', description: error.message })
     },
@@ -93,6 +93,7 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
       toast({ title: 'File uploaded successfully' })
       refetch()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       setUploadProgress(null)
       toast({ variant: 'destructive', title: 'Upload failed', description: error.message })
@@ -108,6 +109,7 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
       setNewFolderName('')
       refetch()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({ variant: 'destructive', title: 'Failed to create directory', description: error.message })
     },
@@ -122,6 +124,7 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
       setSelectedFiles([])
       refetch()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({ variant: 'destructive', title: 'Delete failed', description: error.message })
     },
@@ -183,7 +186,6 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
   // Go up one directory
   const goUp = () => {
     const isWindows = currentPath.includes('\\') || currentPath.match(/^[A-Z]:/i)
-    const separator = isWindows ? '\\' : '/'
     const parts = currentPath.split(/[/\\]/).filter(Boolean)
     parts.pop()
 
@@ -198,10 +200,10 @@ export function FileBrowser({ sessionId, initialPath, onClose }: FileBrowserProp
   const handleItemClick = (item: FileInfo) => {
     if (item.is_dir) {
       const isWindows = currentPath.includes('\\') || currentPath.match(/^[A-Z]:/i)
-      const separator = isWindows ? '\\' : '/'
-      const newPath = currentPath.endsWith(separator) || currentPath === '/'
+      const _separator = isWindows ? '\\' : '/'
+      const newPath = currentPath.endsWith(_separator) || currentPath === '/'
         ? `${currentPath}${item.name}`
-        : `${currentPath}${separator}${item.name}`
+        : `${currentPath}${_separator}${item.name}`
       navigateTo(newPath)
     } else {
       // Toggle selection

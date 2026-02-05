@@ -20,7 +20,6 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
-  Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '@/lib/utils'
@@ -32,7 +31,9 @@ interface BeaconTask {
   created_at: string
   sent_at?: string
   completed_at?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   request?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   response?: any
   description?: string
   error?: string
@@ -40,12 +41,12 @@ interface BeaconTask {
 
 interface BeaconTaskQueueProps {
   beaconId: string
-  beaconName?: string
+  _beaconName?: string
 }
 
 type TaskType = 'shell' | 'download' | 'ps' | 'screenshot'
 
-export function BeaconTaskQueue({ beaconId, beaconName }: BeaconTaskQueueProps) {
+export function BeaconTaskQueue({ beaconId, _beaconName }: BeaconTaskQueueProps) {
   const [showNewTask, setShowNewTask] = useState(false)
   const [taskType, setTaskType] = useState<TaskType>('shell')
   const [command, setCommand] = useState('')
@@ -71,6 +72,7 @@ export function BeaconTaskQueue({ beaconId, beaconName }: BeaconTaskQueueProps) 
       setShowNewTask(false)
       setCommand('')
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -87,6 +89,7 @@ export function BeaconTaskQueue({ beaconId, beaconName }: BeaconTaskQueueProps) 
       queryClient.invalidateQueries({ queryKey: ['beacon-tasks', beaconId] })
       toast({ title: 'Process list task queued' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -103,6 +106,7 @@ export function BeaconTaskQueue({ beaconId, beaconName }: BeaconTaskQueueProps) 
       queryClient.invalidateQueries({ queryKey: ['beacon-tasks', beaconId] })
       toast({ title: 'Screenshot task queued' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -121,6 +125,7 @@ export function BeaconTaskQueue({ beaconId, beaconName }: BeaconTaskQueueProps) 
       setShowNewTask(false)
       setRemotePath('')
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',

@@ -13,7 +13,6 @@ import {
   Terminal,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/lib/utils'
 import api from '@/services/api'
 
 interface ExecuteAssemblyProps {

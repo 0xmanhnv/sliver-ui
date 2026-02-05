@@ -11,6 +11,7 @@ from .users import router as users_router
 from .notes import router as notes_router
 from .armory import router as armory_router
 from .cleanup import router as cleanup_router
+from .browser_ops import router as browser_ops_router
 
 api_router = APIRouter()
 
@@ -24,3 +25,4 @@ api_router.include_router(users_router, prefix="/users", tags=["Users"])
 api_router.include_router(notes_router, prefix="/notes", tags=["Notes & Tags"])
 api_router.include_router(armory_router, prefix="/armory", tags=["Armory"])
 api_router.include_router(cleanup_router, prefix="/cleanup", tags=["Cleanup"])
+api_router.include_router(browser_ops_router, prefix="/browser-ops", tags=["Browser Ops"])

@@ -14,7 +14,6 @@ import {
   Plus,
   Trash2,
   Wand2,
-  Info,
   HelpCircle,
   Lightbulb,
 } from 'lucide-react'
@@ -47,6 +46,7 @@ export function Implants() {
   ])
 
   // Generated implant state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [generatedImplant, setGeneratedImplant] = useState<any>(null)
 
   const generateMutation = useMutation({
@@ -67,6 +67,7 @@ export function Implants() {
       setGeneratedImplant(data)
       toast({ title: 'Implant generated successfully!' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -105,6 +106,7 @@ export function Implants() {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({
         variant: 'destructive',

@@ -30,6 +30,7 @@ export function Listeners() {
       toast({ title: 'mTLS listener started' })
       setShowForm(false)
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -47,6 +48,7 @@ export function Listeners() {
       toast({ title: 'HTTPS listener started' })
       setShowForm(false)
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -63,6 +65,7 @@ export function Listeners() {
       toast({ title: 'HTTP listener started' })
       setShowForm(false)
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -78,6 +81,7 @@ export function Listeners() {
       queryClient.invalidateQueries({ queryKey: ['listeners'] })
       toast({ title: 'Listener stopped' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -218,6 +222,7 @@ export function Listeners() {
             <p className="text-muted-foreground">No active listeners</p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {listeners.map((listener: any) => (
                 <div
                   key={listener.id}

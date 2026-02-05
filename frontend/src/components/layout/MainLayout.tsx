@@ -28,6 +28,7 @@ import {
   HelpCircle,
   RotateCcw,
   Keyboard,
+  Globe,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,7 @@ const navItems = [
   { path: '/implants', icon: Package, label: 'Implants', desc: 'Generate payloads' },
   { path: '/listeners', icon: Antenna, label: 'Listeners', desc: 'Receive connections' },
   { path: '/armory', icon: Puzzle, label: 'Tools', desc: 'Extensions & utilities' },
+  { path: '/browser-ops', icon: Globe, label: 'Browser Ops', desc: 'Cookie & session hijack' },
   { path: '/cleanup', icon: Trash2, label: 'Cleanup', desc: 'Manage connections' },
   { path: '/settings', icon: Settings, label: 'Settings', desc: 'Preferences' },
 ]

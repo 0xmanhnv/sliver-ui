@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { sessionsApi } from '@/services/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import {
@@ -14,7 +13,6 @@ import {
   Cpu,
   Info,
   Loader2,
-  ChevronRight,
   Globe,
   User,
   HardDrive,
@@ -37,6 +35,7 @@ import { Network } from 'lucide-react'
 type TabType = 'info' | 'terminal' | 'files' | 'processes' | 'screenshots' | 'pivots' | 'notes'
 
 export function Sessions() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedSession, setSelectedSession] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<TabType>('info')
   const queryClient = useQueryClient()
@@ -55,6 +54,7 @@ export function Sessions() {
       setSelectedSession(null)
       toast({ title: 'Session killed' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -119,6 +119,7 @@ export function Sessions() {
               </div>
             ) : (
               <div className="divide-y">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {sessions.map((session: any) => (
                   <button
                     key={session.id}
@@ -372,6 +373,7 @@ function InfoCard({
   label,
   value,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any
   label: string
   value: string

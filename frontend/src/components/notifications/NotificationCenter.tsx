@@ -18,7 +18,6 @@ import {
   Volume2,
   VolumeX,
   Settings,
-  ExternalLink,
 } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 

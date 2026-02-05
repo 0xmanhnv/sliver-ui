@@ -16,6 +16,7 @@ const shortcuts = [
   { keys: ['Esc'], description: 'Close dialogs', action: 'escape' },
 ]
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useKeyboardShortcuts() {
   const navigate = useNavigate()
   const [showHelp, setShowHelp] = useState(false)

@@ -32,7 +32,6 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 
 interface CommandHistoryProps {
@@ -50,7 +49,7 @@ interface CommandEntry {
   executed_at: string
 }
 
-export function CommandHistory({ sessionId, sessionType }: CommandHistoryProps) {
+export function CommandHistory({ sessionId, sessionType: _sessionType }: CommandHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCommand, setSelectedCommand] = useState<CommandEntry | null>(null)
   const { toast } = useToast()

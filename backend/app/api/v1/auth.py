@@ -46,8 +46,9 @@ async def login(
     user = result.scalar_one_or_none()
 
     # Check if account is locked (check before password verify to avoid timing attacks)
-    if user and user.locked_until and user.locked_until > datetime.now(timezone.utc):
-        remaining = int((user.locked_until - datetime.now(timezone.utc)).total_seconds())
+    # SQLite stores datetimes as naive, so compare consistently using utcnow()
+    if user and user.locked_until and user.locked_until > datetime.utcnow():
+        remaining = int((user.locked_until - datetime.utcnow()).total_seconds())
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Account is temporarily locked. Try again in {remaining}s",
@@ -60,7 +61,7 @@ async def login(
             user.failed_login_attempts += 1
             # Lock account after 5 failed attempts (15 min lockout)
             if user.failed_login_attempts >= 5:
-                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+                user.locked_until = datetime.utcnow() + timedelta(minutes=15)
                 logger.warning(f"Account {user.username} locked after {user.failed_login_attempts} failed attempts")
             await db.commit()
 
