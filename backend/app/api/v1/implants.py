@@ -21,8 +21,25 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# In-memory cache for generated implants (in production, use Redis or file storage)
+# In-memory cache for generated implants with TTL (1 hour max, 20 entries max)
 _implant_cache: dict = {}
+_CACHE_TTL_SECONDS = 3600
+_CACHE_MAX_SIZE = 20
+
+
+def _cleanup_implant_cache():
+    """Remove expired entries and enforce max size"""
+    now = datetime.now(timezone.utc)
+    expired = [
+        k for k, v in _implant_cache.items()
+        if (now - v["generated_at"]).total_seconds() > _CACHE_TTL_SECONDS
+    ]
+    for k in expired:
+        del _implant_cache[k]
+    # Evict oldest if over max size
+    while len(_implant_cache) > _CACHE_MAX_SIZE:
+        oldest_key = min(_implant_cache, key=lambda k: _implant_cache[k]["generated_at"])
+        del _implant_cache[oldest_key]
 
 
 @router.post("/generate", response_model=ImplantResponse)
@@ -60,7 +77,8 @@ async def generate_implant(
     ext = ext_map.get(config.format, "")
     filename = f"{config.name}{ext}"
 
-    # Cache implant for download
+    # Cleanup and cache implant for download
+    _cleanup_implant_cache()
     cache_key = f"{config.name}_{md5_hash[:8]}"
     _implant_cache[cache_key] = {
         "data": implant_data,

@@ -411,7 +411,7 @@ class SliverManager:
                     }
                     for s in socks
                 ]
-            except:
+            except Exception:
                 pass
 
             # Get port forwards
@@ -429,7 +429,7 @@ class SliverManager:
                     }
                     for p in portfwds
                 ]
-            except:
+            except Exception:
                 pass
 
             return socks_list + portfwd_list
@@ -750,7 +750,7 @@ class SliverManager:
             # Clean up rc file
             try:
                 os.unlink(rc_file)
-            except:
+            except Exception:
                 pass
 
             output = stdout.decode().strip()
@@ -766,7 +766,7 @@ class SliverManager:
         except asyncio.TimeoutError:
             try:
                 os.unlink(rc_file)
-            except:
+            except Exception:
                 pass
             raise SliverCommandError(f"Command timed out after {timeout}s: {command}")
         except SliverCommandError:
@@ -774,7 +774,7 @@ class SliverManager:
         except Exception as e:
             try:
                 os.unlink(rc_file)
-            except:
+            except Exception:
                 pass
             raise SliverCommandError(f"Failed to run sliver-client: {str(e)}")
 
@@ -827,7 +827,7 @@ class SliverManager:
                     for pkg in self.__class__._armory_cache:
                         pkg['installed'] = pkg.get('name', '').lower() in installed or \
                                           pkg.get('command_name', '').lower() in installed
-                except:
+                except Exception:
                     pass
                 return self.__class__._armory_cache
 
@@ -1069,14 +1069,31 @@ class SliverManager:
     # Execute-Assembly Operations
     # ═══════════════════════════════════════════════════════════════════════════
 
+    def _validate_assembly_path(self, assembly_path: str) -> str:
+        """Validate that assembly_path is within the allowed assemblies directory.
+
+        Returns the resolved real path if valid.
+        Raises SliverCommandError if path traversal is detected.
+        """
+        assemblies_dir = os.path.realpath(settings.assemblies_dir)
+        resolved_path = os.path.realpath(assembly_path)
+
+        if not resolved_path.startswith(assemblies_dir + os.sep) and resolved_path != assemblies_dir:
+            raise SliverCommandError(
+                f"Access denied: assembly path must be within {assemblies_dir}"
+            )
+
+        return resolved_path
+
     async def session_execute_assembly(
         self, session_id: str, assembly_path: str, arguments: str = "", timeout: int = 300
     ) -> dict:
         """Execute .NET assembly on session"""
         try:
             session = await self._client.interact_session(session_id)
-            # Read assembly from local path
-            with open(assembly_path, 'rb') as f:
+            # Validate and resolve assembly path (path traversal protection)
+            safe_path = self._validate_assembly_path(assembly_path)
+            with open(safe_path, 'rb') as f:
                 assembly_data = f.read()
 
             result = await asyncio.wait_for(
@@ -1091,6 +1108,8 @@ class SliverManager:
             raise SliverCommandError(f"Execute-assembly timed out after {timeout}s")
         except FileNotFoundError:
             raise SliverCommandError(f"Assembly file not found: {assembly_path}")
+        except SliverCommandError:
+            raise
         except Exception as e:
             raise SliverCommandError(f"Execute-assembly failed: {str(e)}")
 
@@ -1100,19 +1119,22 @@ class SliverManager:
         """Queue execute-assembly task on beacon"""
         try:
             beacon = await self._client.interact_beacon(beacon_id)
-            # Read assembly from local path
-            with open(assembly_path, 'rb') as f:
+            # Validate and resolve assembly path (path traversal protection)
+            safe_path = self._validate_assembly_path(assembly_path)
+            with open(safe_path, 'rb') as f:
                 assembly_data = f.read()
 
             task = await beacon.execute_assembly(assembly_data, arguments)
             return {
                 "task_id": task.TaskID,
                 "beacon_id": beacon_id,
-                "assembly": assembly_path,
+                "assembly": safe_path,
                 "arguments": arguments,
             }
         except FileNotFoundError:
             raise SliverCommandError(f"Assembly file not found: {assembly_path}")
+        except SliverCommandError:
+            raise
         except Exception as e:
             raise SliverCommandError(f"Failed to queue execute-assembly task: {str(e)}")
 
@@ -1122,11 +1144,11 @@ class SliverManager:
 
     async def get_stale_sessions(self, threshold_minutes: int = 1440) -> List[dict]:
         """Get sessions that haven't checked in for a while"""
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         sessions = await self.get_sessions()
         stale = []
-        threshold = datetime.utcnow() - timedelta(minutes=threshold_minutes)
+        threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=threshold_minutes)
 
         for session in sessions:
             last_checkin = session.get("last_checkin")
@@ -1139,16 +1161,16 @@ class SliverManager:
                         checkin_time = datetime.fromtimestamp(last_checkin)
 
                     if checkin_time.replace(tzinfo=None) < threshold:
-                        session["stale_minutes"] = int((datetime.utcnow() - checkin_time.replace(tzinfo=None)).total_seconds() / 60)
+                        session["stale_minutes"] = int((datetime.now(timezone.utc).replace(tzinfo=None) - checkin_time.replace(tzinfo=None)).total_seconds() / 60)
                         stale.append(session)
-                except:
+                except Exception:
                     pass
 
         return stale
 
     async def get_dead_beacons(self, missed_checkins: int = 10) -> List[dict]:
         """Get beacons that have missed multiple check-ins"""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         beacons = await self.get_beacons()
         dead = []
@@ -1164,13 +1186,13 @@ class SliverManager:
                     else:
                         checkin_time = datetime.fromtimestamp(last_checkin)
 
-                    seconds_since = (datetime.utcnow() - checkin_time.replace(tzinfo=None)).total_seconds()
+                    seconds_since = (datetime.now(timezone.utc).replace(tzinfo=None) - checkin_time.replace(tzinfo=None)).total_seconds()
                     expected_checkins = seconds_since / interval
 
                     if expected_checkins >= missed_checkins:
                         beacon["missed_checkins"] = int(expected_checkins)
                         dead.append(beacon)
-                except:
+                except Exception:
                     pass
 
         return dead

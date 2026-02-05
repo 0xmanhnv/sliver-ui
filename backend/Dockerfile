@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # sliver-py doesn't support armory, so we use CLI as workaround
 # Using hardcoded version to avoid GitHub API rate limits during build
 ARG SLIVER_VERSION=v1.6.10
-RUN echo "Downloading sliver-client ${SLIVER_VERSION}..." \
-    && curl -fSL "https://github.com/BishopFox/sliver/releases/download/${SLIVER_VERSION}/sliver-client_linux-amd64" -o /usr/local/bin/sliver-client \
+ARG TARGETARCH=amd64
+RUN echo "Downloading sliver-client ${SLIVER_VERSION} for ${TARGETARCH}..." \
+    && curl -fSL "https://github.com/BishopFox/sliver/releases/download/${SLIVER_VERSION}/sliver-client_linux-${TARGETARCH}" -o /usr/local/bin/sliver-client \
     && chmod +x /usr/local/bin/sliver-client \
     && /usr/local/bin/sliver-client version
 

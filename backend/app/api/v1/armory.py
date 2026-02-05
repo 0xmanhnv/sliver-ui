@@ -123,11 +123,8 @@ async def get_github_token_status(
     """Check if GitHub token is configured"""
     token = settings.github_token
     if token:
-        # Show preview: ghp_xxxx...xxxx
-        if len(token) > 8:
-            preview = f"{token[:8]}...{token[-4:]}"
-        else:
-            preview = "****"
+        # Show minimal preview (4 chars only to limit exposure)
+        preview = f"{token[:4]}...{'*' * 4}"
         return GitHubTokenStatus(configured=True, token_preview=preview)
     return GitHubTokenStatus(configured=False)
 
@@ -156,11 +153,7 @@ async def set_github_token(
     # Also set in environment for subprocess calls
     os.environ['GITHUB_TOKEN'] = token
 
-    if len(token) > 8:
-        preview = f"{token[:8]}...{token[-4:]}"
-    else:
-        preview = "****"
-
+    preview = f"{token[:4]}...{'*' * 4}"
     return GitHubTokenStatus(configured=True, token_preview=preview)
 
 

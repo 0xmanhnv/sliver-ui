@@ -15,10 +15,12 @@ services:
     restart: unless-stopped
     environment:
       - APP_ENV=production
-      - SECRET_KEY=lab-secret-key-change-in-prod
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required - set in .env file}
       - DATABASE_URL=sqlite:///./data/sliverui.db
       - SLIVER_CONFIG=/app/config/operator.cfg
       - LOG_LEVEL=INFO
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required - set in .env file}
       # GitHub token for armory operations (increases rate limit from 60 to 5000/hour)
       # Set via: export GITHUB_TOKEN=ghp_xxx && docker compose up -d
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}

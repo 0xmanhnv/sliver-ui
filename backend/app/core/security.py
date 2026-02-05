@@ -88,14 +88,4 @@ def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
         return None
 
 
-def decode_token(token: str) -> Optional[dict]:
-    """Decode JWT token without verification (for debugging)"""
-    try:
-        return jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[settings.jwt_algorithm],
-            options={"verify_exp": False},
-        )
-    except JWTError:
-        return None
+    # decode_token removed: was bypassing expiration check (security risk)

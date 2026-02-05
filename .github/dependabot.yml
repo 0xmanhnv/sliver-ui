@@ -1,0 +1,115 @@
+version: 2
+
+updates:
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # Python (pip) - Backend
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      pip-production:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "gunicorn"
+          - "sqlalchemy"
+          - "alembic"
+          - "pydantic*"
+          - "redis"
+          - "celery"
+          - "httpx"
+        update-types: ["minor", "patch"]
+      pip-development:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "black"
+          - "mypy"
+          - "types-*"
+        update-types: ["minor", "patch"]
+
+  # npm - Frontend
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+          - "react-router-dom"
+          - "react-hook-form"
+        update-types: ["minor", "patch"]
+      radix-ui:
+        patterns: ["@radix-ui/*"]
+        update-types: ["minor", "patch"]
+      build-tools:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "typescript"
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "tailwindcss"
+          - "vitest"
+        update-types: ["minor", "patch"]
+      tanstack:
+        patterns: ["@tanstack/*"]
+        update-types: ["minor", "patch"]
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "dependencies"
+      - "docker"

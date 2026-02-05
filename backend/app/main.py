@@ -23,6 +23,7 @@ from app.api.v1 import api_router
 from app.api.websocket import websocket_router
 from app.services.database import init_db, close_db
 from app.services.sliver_client import sliver_manager
+from app.middleware.rate_limit import RateLimitMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -37,6 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Application lifespan manager"""
     # Startup
     logger.info(f"Starting {settings.app_name} v{__version__}")
+
+    # Security checks
+    if settings.secret_key == "change-me-to-a-secure-random-string":
+        logger.critical("SECURITY: Using default SECRET_KEY! Set SECRET_KEY env var immediately!")
+    if settings.admin_password == "changeme123":
+        logger.warning("SECURITY: Using default admin password. Set ADMIN_PASSWORD env var.")
 
     # Initialize database
     await init_db()
@@ -73,13 +80,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Rate limiting middleware (must be added before CORS)
+app.add_middleware(RateLimitMiddleware)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 

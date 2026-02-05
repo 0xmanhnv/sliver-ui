@@ -1,4 +1,9 @@
 # SliverUI Backend Dependencies
+#
+# NOTE: This file uses minimum version specifiers (>=) for flexibility.
+# For reproducible production builds, generate a lock file:
+#   pip freeze > requirements.lock
+# Then install with: pip install -r requirements.lock
 
 # Web Framework
 fastapi>=0.109.0

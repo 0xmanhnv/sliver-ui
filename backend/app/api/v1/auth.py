@@ -3,7 +3,7 @@ Authentication endpoints
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
@@ -45,11 +45,23 @@ async def login(
     )
     user = result.scalar_one_or_none()
 
+    # Check if account is locked (check before password verify to avoid timing attacks)
+    if user and user.locked_until and user.locked_until > datetime.now(timezone.utc):
+        remaining = int((user.locked_until - datetime.now(timezone.utc)).total_seconds())
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Account is temporarily locked. Try again in {remaining}s",
+        )
+
     # Check credentials
     if not user or not verify_password(login_data.password, user.password_hash):
-        # Log failed attempt
+        # Log failed attempt and enforce lockout
         if user:
             user.failed_login_attempts += 1
+            # Lock account after 5 failed attempts (15 min lockout)
+            if user.failed_login_attempts >= 5:
+                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+                logger.warning(f"Account {user.username} locked after {user.failed_login_attempts} failed attempts")
             await db.commit()
 
         raise HTTPException(
@@ -62,13 +74,6 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is disabled",
-        )
-
-    # Check if account is locked
-    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is temporarily locked",
         )
 
     # Reset failed attempts

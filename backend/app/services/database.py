@@ -140,16 +140,17 @@ async def seed_data(session: AsyncSession) -> None:
 
     await session.flush()
 
-    # Create default admin user
+    # Create default admin user (reads from ADMIN_USERNAME/ADMIN_PASSWORD env vars)
     admin_user = User(
-        username="admin",
-        email="admin@sliverui.local",
-        password_hash=get_password_hash("changeme123"),  # Default password
+        username=settings.admin_username,
+        email=f"{settings.admin_username}@sliverui.local",
+        password_hash=get_password_hash(settings.admin_password),
         role_id=admin_role.id,
         is_active=True,
     )
     session.add(admin_user)
 
     await session.commit()
-    logger.info("Initial data seeded successfully")
-    logger.warning("Default admin password is 'changeme123' - please change it!")
+    logger.info(f"Initial data seeded successfully (admin user: {settings.admin_username})")
+    if settings.admin_password == "changeme123":
+        logger.warning("Using default admin password 'changeme123' - set ADMIN_PASSWORD env var!")

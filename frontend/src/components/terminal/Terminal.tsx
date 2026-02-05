@@ -21,12 +21,23 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
   const xtermRef = useRef<XTerm | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const inputBufferRef = useRef('')
+  const commandHistoryRef = useRef<string[]>([])
+  const historyIndexRef = useRef(-1)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [commandHistory, setCommandHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [outputBuffer, setOutputBuffer] = useState<string[]>([])
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const { toast } = useToast()
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    commandHistoryRef.current = commandHistory
+  }, [commandHistory])
+
+  useEffect(() => {
+    historyIndexRef.current = historyIndex
+  }, [historyIndex])
 
   // Shell execution mutation
   const shellMutation = useMutation({
@@ -59,6 +70,12 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
       }
     },
   })
+
+  // Stable reference to shellMutation for use in the terminal effect
+  const shellMutationRef = useRef(shellMutation)
+  useEffect(() => {
+    shellMutationRef.current = shellMutation
+  }, [shellMutation])
 
   // Get prompt based on OS
   const getPrompt = useCallback(() => {
@@ -183,7 +200,7 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
             xterm.clear()
             xterm.write(getPrompt())
           } else if (command === 'history') {
-            commandHistory.forEach((cmd, i) => {
+            commandHistoryRef.current.forEach((cmd, i) => {
               xterm.writeln(`  ${i + 1}  ${cmd}`)
             })
             xterm.write(getPrompt())
@@ -202,7 +219,7 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
             xterm.write(getPrompt())
           } else {
             // Send to session
-            shellMutation.mutate({ command })
+            shellMutationRef.current.mutate({ command })
           }
         } else {
           xterm.write(getPrompt())
@@ -216,10 +233,12 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
         }
       } else if (domEvent.key === 'ArrowUp') {
         // Navigate history up
-        const history = commandHistory
+        const history = commandHistoryRef.current
         if (history.length > 0) {
-          const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1)
+          const currentIdx = historyIndexRef.current
+          const newIndex = currentIdx === -1 ? history.length - 1 : Math.max(0, currentIdx - 1)
           setHistoryIndex(newIndex)
+          historyIndexRef.current = newIndex
           const cmd = history[newIndex]
 
           // Clear current input
@@ -234,9 +253,10 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
         }
       } else if (domEvent.key === 'ArrowDown') {
         // Navigate history down
-        const history = commandHistory
-        if (historyIndex !== -1) {
-          const newIndex = historyIndex >= history.length - 1 ? -1 : historyIndex + 1
+        const history = commandHistoryRef.current
+        const currentIdx = historyIndexRef.current
+        if (currentIdx !== -1) {
+          const newIndex = currentIdx >= history.length - 1 ? -1 : currentIdx + 1
 
           // Clear current input
           while (inputBufferRef.current.length > 0) {
@@ -246,8 +266,10 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
 
           if (newIndex === -1) {
             setHistoryIndex(-1)
+            historyIndexRef.current = -1
           } else {
             setHistoryIndex(newIndex)
+            historyIndexRef.current = newIndex
             const cmd = history[newIndex]
             inputBufferRef.current = cmd
             xterm.write(cmd)
@@ -287,7 +309,7 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
       window.removeEventListener('keydown', handleGlobalKeydown)
       xterm.dispose()
     }
-  }, [sessionId, sessionName, os, getPrompt, commandHistory, historyIndex, shellMutation])
+  }, [sessionId, sessionName, os, getPrompt])
 
   // Copy output to clipboard
   const copyOutput = () => {

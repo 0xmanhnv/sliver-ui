@@ -16,6 +16,8 @@ services:
       - SLIVER_CONFIG=/app/config/operator.cfg
       - JWT_ALGORITHM=HS256
       - JWT_EXPIRE_MINUTES=60
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
     volumes:
       - ./backend:/app
       - ./data/sqlite:/app/data

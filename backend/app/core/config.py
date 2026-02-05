@@ -37,11 +37,18 @@ class Settings(BaseSettings):
     # Sliver
     sliver_config: Optional[str] = None
 
+    # Assemblies directory for execute-assembly (path traversal protection)
+    assemblies_dir: str = "/app/data/assemblies"
+
     # GitHub token for armory operations (increases rate limit from 60 to 5000/hour)
     github_token: Optional[str] = None
 
     # CORS
     cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    # Admin credentials (used for initial database seed)
+    admin_username: str = "admin"
+    admin_password: str = "changeme123"
 
     # Rate Limiting
     rate_limit_per_minute: int = 100

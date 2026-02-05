@@ -6,7 +6,6 @@ import { useToast } from '@/components/ui/use-toast'
 import {
   Camera,
   Download,
-  RefreshCw,
   Maximize2,
   X,
   Loader2,
@@ -30,7 +29,6 @@ export function ScreenshotViewer({ sessionId, sessionName }: ScreenshotViewerPro
   const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [selectedScreenshot, setSelectedScreenshot] = useState<Screenshot | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [autoRefresh, setAutoRefresh] = useState(false)
   const { toast } = useToast()
   const accessToken = useAuthStore((state) => state.accessToken)
 
@@ -75,15 +73,6 @@ export function ScreenshotViewer({ sessionId, sessionName }: ScreenshotViewerPro
     document.body.removeChild(link)
   }
 
-  // Auto refresh effect
-  // useEffect(() => {
-  //   if (!autoRefresh) return
-  //   const interval = setInterval(() => {
-  //     screenshotMutation.mutate()
-  //   }, 5000)
-  //   return () => clearInterval(interval)
-  // }, [autoRefresh])
-
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
@@ -98,15 +87,6 @@ export function ScreenshotViewer({ sessionId, sessionName }: ScreenshotViewerPro
             <Camera className="h-4 w-4 mr-2" />
           )}
           Capture
-        </Button>
-
-        <Button
-          variant={autoRefresh ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setAutoRefresh(!autoRefresh)}
-        >
-          <RefreshCw className={cn('h-4 w-4 mr-1', autoRefresh && 'animate-spin')} />
-          Auto (5s)
         </Button>
 
         {selectedScreenshot && (

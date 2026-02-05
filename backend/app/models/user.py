@@ -89,10 +89,9 @@ class User(Base, TimestampMixin):
             return False
 
         for perm in self.role.permissions:
-            if perm.resource == resource and perm.action == action:
-                return True
-            # Wildcard permissions
-            if perm.resource == "*" or perm.action == "*":
+            resource_match = (perm.resource == resource or perm.resource == "*")
+            action_match = (perm.action == action or perm.action == "*")
+            if resource_match and action_match:
                 return True
 
         return False

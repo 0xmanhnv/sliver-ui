@@ -2,12 +2,13 @@
 Session notes and tags endpoints
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 
 from app.api.deps import get_db, require_permission
@@ -94,6 +95,7 @@ async def get_session_notes(
     """Get all notes for a session"""
     result = await db.execute(
         select(SessionNote)
+        .options(selectinload(SessionNote.user))
         .where(SessionNote.session_id == session_id)
         .where(SessionNote.session_type == session_type)
         .order_by(SessionNote.created_at.desc())
@@ -152,15 +154,23 @@ async def update_note(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_permission("sessions", "write")),
 ):
-    """Update a note"""
-    result = await db.execute(select(SessionNote).where(SessionNote.id == note_id))
+    """Update a note (only owner or admin)"""
+    result = await db.execute(
+        select(SessionNote)
+        .options(selectinload(SessionNote.user))
+        .where(SessionNote.id == note_id)
+    )
     note = result.scalar_one_or_none()
 
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
 
+    # Only note owner or admin can update
+    if note.user_id != user.id and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Can only edit your own notes")
+
     note.content = note_data.content
-    note.updated_at = datetime.utcnow()
+    note.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(note)
 
@@ -182,7 +192,16 @@ async def delete_note(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_permission("sessions", "write")),
 ):
-    """Delete a note"""
+    """Delete a note (only owner or admin)"""
+    result = await db.execute(select(SessionNote).where(SessionNote.id == note_id))
+    note = result.scalar_one_or_none()
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    if note.user_id != user.id and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Can only delete your own notes")
+
     await db.execute(delete(SessionNote).where(SessionNote.id == note_id))
     await db.commit()
     return {"message": "Note deleted"}
@@ -326,6 +345,7 @@ async def get_command_history(
     """Get command history for a session"""
     result = await db.execute(
         select(CommandHistory)
+        .options(selectinload(CommandHistory.user))
         .where(CommandHistory.session_id == session_id)
         .order_by(CommandHistory.executed_at.desc())
         .limit(limit)
@@ -380,7 +400,9 @@ async def export_session_data(
     """Export all session data (notes, tags, history)"""
     # Get notes
     notes_result = await db.execute(
-        select(SessionNote).where(SessionNote.session_id == session_id)
+        select(SessionNote)
+        .options(selectinload(SessionNote.user))
+        .where(SessionNote.session_id == session_id)
     )
     notes = [
         {
@@ -402,6 +424,7 @@ async def export_session_data(
     # Get history
     history_result = await db.execute(
         select(CommandHistory)
+        .options(selectinload(CommandHistory.user))
         .where(CommandHistory.session_id == session_id)
         .order_by(CommandHistory.executed_at)
     )
@@ -421,5 +444,5 @@ async def export_session_data(
         "notes": notes,
         "tags": tags,
         "command_history": history,
-        "exported_at": datetime.utcnow().isoformat(),
+        "exported_at": datetime.now(timezone.utc).isoformat(),
     }

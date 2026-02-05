@@ -21,6 +21,8 @@ services:
       - SLIVER_CONFIG=${SLIVER_CONFIG:-/app/data/operator.cfg}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

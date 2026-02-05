@@ -19,6 +19,12 @@ nginx/ssl/*.pem
 nginx/ssl/*.key
 nginx/ssl/*.crt
 
+# TLS certificates
+certs/
+*.pem
+*.crt
+*.key
+
 # Python
 __pycache__/
 *.py[cod]
