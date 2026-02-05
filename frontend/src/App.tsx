@@ -17,6 +17,7 @@ import { Armory } from '@/pages/Armory'
 import { Cleanup } from '@/pages/Cleanup'
 import { Settings } from '@/pages/Settings'
 import { Admin } from '@/pages/Admin'
+import { BrowserOps } from '@/pages/BrowserOps'
 
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ function App() {
           <Route path="/listeners" element={<Listeners />} />
           <Route path="/armory" element={<Armory />} />
           <Route path="/cleanup" element={<Cleanup />} />
+          <Route path="/browser-ops" element={<BrowserOps />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/admin" element={<Admin />} />
         </Route>

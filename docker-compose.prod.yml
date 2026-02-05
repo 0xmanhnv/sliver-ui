@@ -20,7 +20,7 @@ services:
       - DATABASE_URL=sqlite:///./data/sliverui.db
       - SLIVER_CONFIG=${SLIVER_CONFIG:-/app/data/operator.cfg}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:5173","http://localhost:3000"]}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
     volumes:

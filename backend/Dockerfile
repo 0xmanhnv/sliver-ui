@@ -23,6 +23,9 @@ RUN echo "Downloading sliver-client ${SLIVER_VERSION} for ${TARGETARCH}..." \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Playwright browser (headless Chromium for automation)
+RUN playwright install --with-deps chromium
+
 # Copy application code
 COPY app/ ./app/
 COPY alembic/ ./alembic/

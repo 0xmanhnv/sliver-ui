@@ -7,7 +7,6 @@ import { useToast } from '@/components/ui/use-toast'
 import {
   Users,
   Plus,
-  RefreshCw,
   Edit,
   Trash2,
   Shield,
@@ -71,6 +70,7 @@ export function UserManagement() {
       toast({ title: 'User created successfully' })
       resetForm()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -82,12 +82,14 @@ export function UserManagement() {
 
   // Update user mutation
   const updateMutation = useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: ({ id, data }: { id: number; data: any }) => usersApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast({ title: 'User updated successfully' })
       resetForm()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -104,6 +106,7 @@ export function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast({ title: 'User deleted' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -145,6 +148,7 @@ export function UserManagement() {
 
   const handleSubmit = () => {
     if (editingUser) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {}
       if (formData.username !== editingUser.username) updateData.username = formData.username
       if (formData.email !== (editingUser.email || '')) updateData.email = formData.email

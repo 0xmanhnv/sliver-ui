@@ -29,6 +29,7 @@ import { ListSkeleton } from '@/components/common/LoadingSkeleton'
 type TabType = 'info' | 'tasks' | 'notes'
 
 export function Beacons() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedBeacon, setSelectedBeacon] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<TabType>('info')
   const queryClient = useQueryClient()
@@ -47,6 +48,7 @@ export function Beacons() {
       setSelectedBeacon(null)
       toast({ title: 'Beacon killed' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -124,6 +126,7 @@ export function Beacons() {
               </div>
             ) : (
               <div className="divide-y">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {beacons.map((beacon: any) => {
                   const checkIn = getCheckInStatus(beacon.last_checkin, beacon.interval)
 
@@ -355,6 +358,7 @@ function InfoCard({
   label,
   value,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any
   label: string
   value: string

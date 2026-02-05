@@ -88,6 +88,7 @@ export function Tooltip({
 }
 
 // Technical term tooltips
+// eslint-disable-next-line react-refresh/only-export-components
 export const TechTerms = {
   session: 'Direct real-time connection to the target. Commands execute immediately.',
   beacon: 'Periodic connection (check-in). Commands are queued and execute on next check-in.',

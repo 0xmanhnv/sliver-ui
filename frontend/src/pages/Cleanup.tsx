@@ -17,7 +17,6 @@ import {
   Loader2,
   Skull,
   HelpCircle,
-  Info,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'

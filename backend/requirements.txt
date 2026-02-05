@@ -37,5 +37,9 @@ email-validator>=2.1.0
 httpx>=0.26.0
 aiofiles>=23.2.1
 
+# Browser Automation
+websockets>=12.0
+playwright>=1.40.0
+
 # Utilities
 python-dateutil>=2.8.2

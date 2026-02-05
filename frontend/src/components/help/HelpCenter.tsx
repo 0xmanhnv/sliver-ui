@@ -11,14 +11,12 @@ import {
   ExternalLink,
   ChevronRight,
   Monitor,
-  Radio,
   Package,
   Antenna,
   Terminal,
   FileText,
   Camera,
   Cpu,
-  Shield,
   Clock,
 } from 'lucide-react'
 

@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Search,
   Download,
-  Filter,
   Calendar,
   User,
   Activity,
@@ -26,6 +25,7 @@ interface AuditLog {
   action: string
   resource: string
   resource_id?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any
   ip_address?: string
   created_at: string

@@ -11,12 +11,9 @@ import {
   Network,
   ArrowRightLeft,
   Trash2,
-  Globe,
-  Server,
   Copy,
   Shield,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface Pivot {
   id: string
@@ -36,7 +33,7 @@ interface PivotManagerProps {
 
 type PivotType = 'socks5' | 'portfwd'
 
-export function PivotManager({ sessionId, sessionName }: PivotManagerProps) {
+export function PivotManager({ sessionId, sessionName: _sessionName }: PivotManagerProps) {
   const [showNewPivot, setShowNewPivot] = useState(false)
   const [pivotType, setPivotType] = useState<PivotType>('socks5')
 
@@ -71,6 +68,7 @@ export function PivotManager({ sessionId, sessionName }: PivotManagerProps) {
       setShowNewPivot(false)
       resetForm()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -87,6 +85,7 @@ export function PivotManager({ sessionId, sessionName }: PivotManagerProps) {
       queryClient.invalidateQueries({ queryKey: ['pivots', sessionId] })
       toast({ title: 'SOCKS proxy stopped' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -120,6 +119,7 @@ export function PivotManager({ sessionId, sessionName }: PivotManagerProps) {
       setShowNewPivot(false)
       resetForm()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',
@@ -136,6 +136,7 @@ export function PivotManager({ sessionId, sessionName }: PivotManagerProps) {
       queryClient.invalidateQueries({ queryKey: ['pivots', sessionId] })
       toast({ title: 'Port forward stopped' })
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast({
         variant: 'destructive',

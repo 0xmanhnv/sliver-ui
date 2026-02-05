@@ -62,6 +62,18 @@ api.interceptors.response.use(
   }
 )
 
+// Helper to safely extract error message from API responses
+// FastAPI 422 returns detail as array of objects {type, loc, msg, input, ctx}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getApiErrorMessage(error: any, fallback = 'Unknown error'): string {
+  const detail = error?.response?.data?.detail
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join('; ')
+  }
+  return error?.response?.data?.error || error?.message || fallback
+}
+
 // API functions
 
 // Auth
@@ -519,6 +531,159 @@ export const usersApi = {
     const response = await api.get('/users/roles')
     return response.data
   },
+}
+
+// Browser Ops
+export const browserOpsApi = {
+  extractCookies: async (data: {
+    session_id: string
+    browser: string
+    method: string
+    target_domain?: string
+    assembly_path?: string
+    timeout?: number
+  }) => {
+    const response = await api.post('/browser-ops/extract-cookies', data)
+    return response.data
+  },
+
+  getCookies: async (params: {
+    session_id?: string
+    domain?: string
+    name?: string
+  }) => {
+    const response = await api.get('/browser-ops/cookies', { params })
+    return response.data
+  },
+
+  exportCookies: async (data: {
+    cookie_ids?: number[]
+    session_id?: string
+    domain_filter?: string
+    format: string
+  }) => {
+    const response = await api.post('/browser-ops/cookies/export', data)
+    return response.data
+  },
+
+  deleteCookies: async (sessionId?: string) => {
+    const response = await api.delete('/browser-ops/cookies', {
+      params: { session_id: sessionId },
+    })
+    return response.data
+  },
+
+  startProxy: async (data: { session_id: string; port?: number }) => {
+    const response = await api.post('/browser-ops/start-proxy', data)
+    return response.data
+  },
+
+  stopProxy: async (data: { session_id: string; tunnel_id: number }) => {
+    const response = await api.post('/browser-ops/stop-proxy', data)
+    return response.data
+  },
+
+  startCDP: async (data: {
+    session_id: string
+    remote_port?: number
+    local_port?: number
+  }) => {
+    const response = await api.post('/browser-ops/start-cdp', data)
+    return response.data
+  },
+
+  stopCDP: async (data: { session_id: string; tunnel_id: number }) => {
+    const response = await api.post('/browser-ops/stop-cdp', data)
+    return response.data
+  },
+
+  downloadProfile: async (data: {
+    session_id: string
+    browser: string
+    profile_name?: string
+  }) => {
+    const response = await api.post('/browser-ops/download-profile', data)
+    return response.data
+  },
+
+  getBrowserInfo: async (sessionId: string) => {
+    const response = await api.get(`/browser-ops/browser-info/${sessionId}`)
+    return response.data
+  },
+
+  // CDP Cookie Injection
+  injectCookies: async (data: {
+    host?: string
+    port?: number
+    cookie_ids: number[]
+    url?: string
+  }) => {
+    const response = await api.post('/browser-ops/inject-cookies', data)
+    return response.data
+  },
+
+  getCDPTargets: async (host = '127.0.0.1', port = 9222) => {
+    const response = await api.get('/browser-ops/cdp-targets', {
+      params: { host, port },
+    })
+    return response.data
+  },
+
+  // Playwright Automation
+  startAutomation: async (data: {
+    cookie_ids: number[]
+    url?: string
+    user_agent?: string
+    viewport_width?: number
+    viewport_height?: number
+    proxy?: string
+  }) => {
+    const response = await api.post('/browser-ops/automation/start', data)
+    return response.data
+  },
+
+  automationNavigate: async (data: {
+    automation_id: string
+    url: string
+    wait_for?: string
+    screenshot?: boolean
+  }) => {
+    const response = await api.post('/browser-ops/automation/navigate', data)
+    return response.data
+  },
+
+  automationScreenshot: async (data: {
+    automation_id: string
+    full_page?: boolean
+  }) => {
+    const response = await api.post('/browser-ops/automation/screenshot', data)
+    return response.data
+  },
+
+  automationExecuteJS: async (data: {
+    automation_id: string
+    script: string
+  }) => {
+    const response = await api.post('/browser-ops/automation/execute-js', data)
+    return response.data
+  },
+
+  automationCookies: async (automationId: string) => {
+    const response = await api.post('/browser-ops/automation/cookies', {
+      automation_id: automationId,
+    })
+    return response.data
+  },
+
+  stopAutomation: async (automationId: string) => {
+    const response = await api.post('/browser-ops/automation/stop', {
+      automation_id: automationId,
+    })
+    return response.data
+  },
+
+  getProfileZipUrl: (sessionId: string, browser: string) =>
+    `${api.defaults.baseURL}/browser-ops/profile-zip/${sessionId}/${browser}`,
 }
 
 export default api

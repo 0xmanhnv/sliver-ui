@@ -1,7 +1,6 @@
 import { useAuthStore } from '@/store/authStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Settings as SettingsIcon, User, Shield, Info } from 'lucide-react'
+import { User, Shield, Info } from 'lucide-react'
 
 export function Settings() {
   const { user } = useAuthStore()

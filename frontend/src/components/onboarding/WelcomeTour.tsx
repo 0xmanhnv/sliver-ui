@@ -188,6 +188,7 @@ export function WelcomeTour({ onComplete, onSkip }: WelcomeTourProps) {
 }
 
 // Hook to manage tour state
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTour() {
   const [showTour, setShowTour] = useState(false)
 

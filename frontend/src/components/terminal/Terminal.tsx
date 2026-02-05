@@ -62,6 +62,7 @@ export function Terminal({ sessionId, sessionName, os }: TerminalProps) {
       // Write new prompt
       writePrompt()
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       const xterm = xtermRef.current
       if (xterm) {

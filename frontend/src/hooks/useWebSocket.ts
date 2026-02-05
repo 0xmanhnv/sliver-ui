@@ -5,6 +5,7 @@ import { useNotificationStore } from '@/store/notificationStore'
 
 interface WebSocketMessage {
   event: 'connected' | 'session.new' | 'session.lost' | 'beacon.new' | 'beacon.checkin' | 'task_completed' | 'notification' | 'ping' | 'pong' | 'subscribed' | 'error'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any
 }
 
@@ -172,7 +173,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         const parsed = JSON.parse(authData)
         token = parsed.state?.accessToken || null
       }
-    } catch (e) {
+    } catch {
       // Ignore parse errors
     }
     if (!token) {
@@ -231,6 +232,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     setIsConnected(false)
   }, [])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data))

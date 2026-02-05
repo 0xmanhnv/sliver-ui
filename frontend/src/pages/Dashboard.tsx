@@ -123,6 +123,7 @@ export function Dashboard() {
             <p className="text-muted-foreground">No active sessions</p>
           ) : (
             <div className="space-y-4">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {sessions.slice(0, 5).map((session: any) => (
                 <div
                   key={session.id}
@@ -164,6 +165,7 @@ export function Dashboard() {
             <p className="text-muted-foreground">No active beacons</p>
           ) : (
             <div className="space-y-4">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {beacons.slice(0, 5).map((beacon: any) => (
                 <div
                   key={beacon.id}
@@ -207,6 +209,7 @@ export function Dashboard() {
             <p className="text-muted-foreground">No active listeners</p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {listeners.map((listener: any) => (
                 <div
                   key={listener.id}

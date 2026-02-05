@@ -12,7 +12,6 @@ import {
   Cpu,
   FileText,
   Info,
-  Clock,
   Shield,
   Eye,
 } from 'lucide-react'
