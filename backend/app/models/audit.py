@@ -20,7 +20,9 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
     action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     resource: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     resource_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

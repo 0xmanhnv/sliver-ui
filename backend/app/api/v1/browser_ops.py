@@ -247,7 +247,9 @@ async def export_cookies(
 @router.delete("/cookies", response_model=MessageResponse)
 async def delete_cookies(
     request: Request,
-    session_id: Optional[str] = Query(None, description="Delete cookies for this session"),
+    session_id: Optional[str] = Query(
+        None, description="Delete cookies for this session"
+    ),
     user: User = Depends(require_permission("browser_ops", "delete")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -531,11 +533,13 @@ async def download_profile(
 
             data = await sliver.session_download(req.session_id, remote_path)
             files_data.append({"name": f["name"], "data": data})
-            downloaded.append(ProfileFileInfo(
-                name=f["name"],
-                size=len(data),
-                local_path=remote_path,
-            ))
+            downloaded.append(
+                ProfileFileInfo(
+                    name=f["name"],
+                    size=len(data),
+                    local_path=remote_path,
+                )
+            )
         except Exception as e:
             logger.warning(f"Failed to download {f['name']}: {e}")
             continue
@@ -590,6 +594,7 @@ async def get_profile_zip(
     svc = BrowserOpsService(sliver=None)
 
     from app.services.browser_ops import PROFILE_DATA_DIR
+
     profile_dir = PROFILE_DATA_DIR / session_id / browser
     if not profile_dir.exists():
         raise HTTPException(

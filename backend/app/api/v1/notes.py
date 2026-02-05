@@ -21,6 +21,7 @@ router = APIRouter()
 # Schemas
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class NoteCreate(BaseModel):
     session_id: str
     session_type: str = "session"
@@ -84,6 +85,7 @@ class CommandHistoryResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════
 # Notes Endpoints
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/sessions/{session_id}/notes", response_model=List[NoteResponse])
 async def get_session_notes(
@@ -211,6 +213,7 @@ async def delete_note(
 # Tags Endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.get("/tags", response_model=List[TagResponse])
 async def list_tags(
     db: AsyncSession = Depends(get_db),
@@ -335,7 +338,10 @@ async def remove_tag_from_session(
 # Command History Endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
-@router.get("/sessions/{session_id}/history", response_model=List[CommandHistoryResponse])
+
+@router.get(
+    "/sessions/{session_id}/history", response_model=List[CommandHistoryResponse]
+)
 async def get_command_history(
     session_id: str,
     limit: int = Query(100, le=500),
@@ -415,9 +421,7 @@ async def export_session_data(
 
     # Get tags
     tags_result = await db.execute(
-        select(Tag)
-        .join(SessionTag)
-        .where(SessionTag.session_id == session_id)
+        select(Tag).join(SessionTag).where(SessionTag.session_id == session_id)
     )
     tags = [t.name for t in tags_result.scalars().all()]
 

@@ -32,8 +32,12 @@ class ImplantGenerateRequest(BaseModel):
     c2: List[C2Config] = Field(..., min_length=1, max_length=5)
 
     # Beacon config (optional, if not set creates session implant)
-    beacon: bool = Field(default=False, description="Generate beacon instead of session")
-    interval: int = Field(default=60, ge=1, le=86400, description="Beacon interval in seconds")
+    beacon: bool = Field(
+        default=False, description="Generate beacon instead of session"
+    )
+    interval: int = Field(
+        default=60, ge=1, le=86400, description="Beacon interval in seconds"
+    )
     jitter: int = Field(default=30, ge=0, le=100, description="Jitter percentage")
 
     # Evasion options
@@ -46,8 +50,12 @@ class ImplantGenerateRequest(BaseModel):
     limit_domain: Optional[str] = Field(None, description="Limit to domain")
     limit_hostname: Optional[str] = Field(None, description="Limit to hostname")
     limit_username: Optional[str] = Field(None, description="Limit to username")
-    limit_datetime: Optional[str] = Field(None, description="Limit execution after datetime")
-    limit_file_exists: Optional[str] = Field(None, description="Only run if file exists")
+    limit_datetime: Optional[str] = Field(
+        None, description="Limit execution after datetime"
+    )
+    limit_file_exists: Optional[str] = Field(
+        None, description="Only run if file exists"
+    )
 
     # Max errors before exit
     max_errors: int = Field(default=10, ge=1, le=1000)

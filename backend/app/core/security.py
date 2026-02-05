@@ -87,5 +87,4 @@ def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
     except JWTError:
         return None
 
-
     # decode_token removed: was bypassing expiration check (security risk)

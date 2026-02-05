@@ -271,6 +271,7 @@ async def download_file(
 # Pivoting Operations
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.get("/{session_id}/pivots")
 async def list_pivots(
     session_id: str,
@@ -454,6 +455,7 @@ async def stop_port_forward(
 # File Operations
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/{session_id}/files/upload")
 async def upload_file(
     session_id: str,
@@ -620,6 +622,7 @@ async def take_screenshot(
 # ═══════════════════════════════════════════════════════════════════════════
 # Execute-Assembly Operations
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class ExecuteAssemblyRequest(BaseModel):
     assembly_path: str

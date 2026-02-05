@@ -14,7 +14,10 @@ from app.core.config import settings
 config = context.config
 
 # Override sqlalchemy.url with settings
-config.set_main_option("sqlalchemy.url", settings.database_url.replace("sqlite:///", "sqlite+aiosqlite:///"))
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database_url.replace("sqlite:///", "sqlite+aiosqlite:///"),
+)
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:
@@ -62,6 +65,7 @@ async def run_async_migrations() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     import asyncio
+
     asyncio.run(run_async_migrations())
 
 

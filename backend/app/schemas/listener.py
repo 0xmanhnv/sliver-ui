@@ -42,7 +42,9 @@ class HTTPSListenerRequest(BaseModel):
 
     host: str = Field(default="0.0.0.0", description="Bind address")
     port: int = Field(default=443, ge=1, le=65535)
-    domain: Optional[str] = Field(default="", description="Domain for TLS certificate (optional)")
+    domain: Optional[str] = Field(
+        default="", description="Domain for TLS certificate (optional)"
+    )
     website: Optional[str] = Field(None, description="Website content to serve")
     # Let's Encrypt options
     letsencrypt: bool = Field(default=False, description="Use Let's Encrypt")

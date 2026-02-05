@@ -6,10 +6,10 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # Cookie Extraction
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class ExtractCookiesRequest(BaseModel):
     """Request to extract cookies from target browser"""
@@ -18,12 +18,10 @@ class ExtractCookiesRequest(BaseModel):
     browser: Literal["chrome", "edge", "firefox"] = Field(
         default="chrome", description="Target browser"
     )
-    method: Literal["sharp_chromium", "sharp_dpapi", "cookie_monster", "manual_shell"] = Field(
-        default="sharp_chromium", description="Extraction method"
-    )
-    target_domain: Optional[str] = Field(
-        None, description="Filter cookies by domain"
-    )
+    method: Literal[
+        "sharp_chromium", "sharp_dpapi", "cookie_monster", "manual_shell"
+    ] = Field(default="sharp_chromium", description="Extraction method")
+    target_domain: Optional[str] = Field(None, description="Filter cookies by domain")
     assembly_path: Optional[str] = Field(
         None, description="Custom assembly path (overrides default)"
     )
@@ -91,6 +89,7 @@ class ExportCookiesResponse(BaseModel):
 # SOCKS Proxy
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class StartProxyRequest(BaseModel):
     """Request to start SOCKS5 proxy through session"""
 
@@ -120,6 +119,7 @@ class StopProxyRequest(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════
 # CDP Remote Debugging
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class StartCDPRequest(BaseModel):
     """Request to set up CDP remote debugging port forward"""
@@ -153,6 +153,7 @@ class StopCDPRequest(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════
 # Browser Detection & Profile
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class BrowserInfo(BaseModel):
     """Detected browser on target"""
@@ -207,6 +208,7 @@ class DownloadProfileResponse(BaseModel):
 # CDP Cookie Injection
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class InjectCookiesRequest(BaseModel):
     """Request to inject cookies into a local browser via CDP"""
 
@@ -247,6 +249,7 @@ class CDPTargetsResponse(BaseModel):
 # Playwright Automation
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class StartAutomationRequest(BaseModel):
     """Request to start a headless browser automation session"""
 
@@ -255,7 +258,9 @@ class StartAutomationRequest(BaseModel):
     user_agent: Optional[str] = Field(None, description="Custom User-Agent")
     viewport_width: int = Field(default=1920, ge=800, le=3840)
     viewport_height: int = Field(default=1080, ge=600, le=2160)
-    proxy: Optional[str] = Field(None, description="Proxy URL (e.g. socks5://127.0.0.1:1080)")
+    proxy: Optional[str] = Field(
+        None, description="Proxy URL (e.g. socks5://127.0.0.1:1080)"
+    )
 
 
 class StartAutomationResponse(BaseModel):

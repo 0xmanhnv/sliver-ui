@@ -59,6 +59,7 @@ class Settings(BaseSettings):
         stripped = v.strip()
         if stripped.startswith("["):
             import json
+
             return json.loads(stripped)
         # Otherwise treat as comma-separated
         return [origin.strip() for origin in v.split(",") if origin.strip()]

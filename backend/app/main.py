@@ -41,9 +41,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Security checks
     if settings.secret_key == "change-me-to-a-secure-random-string":
-        logger.critical("SECURITY: Using default SECRET_KEY! Set SECRET_KEY env var immediately!")
+        logger.critical(
+            "SECURITY: Using default SECRET_KEY! Set SECRET_KEY env var immediately!"
+        )
     if settings.admin_password == "changeme123":
-        logger.warning("SECURITY: Using default admin password. Set ADMIN_PASSWORD env var.")
+        logger.warning(
+            "SECURITY: Using default admin password. Set ADMIN_PASSWORD env var."
+        )
 
     # Initialize database
     await init_db()

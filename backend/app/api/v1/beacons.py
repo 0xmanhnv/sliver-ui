@@ -90,6 +90,7 @@ async def kill_beacon(
 # Beacon Task Operations
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.get("/{beacon_id}/tasks")
 async def list_beacon_tasks(
     beacon_id: str,
@@ -293,6 +294,7 @@ async def get_task_result(
 # Execute-Assembly Operations
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class ExecuteAssemblyRequest(BaseModel):
     assembly_path: str
     arguments: str = ""
@@ -305,7 +307,9 @@ class ExecuteAssemblyTaskResponse(BaseModel):
     arguments: str
 
 
-@router.post("/{beacon_id}/tasks/execute-assembly", response_model=ExecuteAssemblyTaskResponse)
+@router.post(
+    "/{beacon_id}/tasks/execute-assembly", response_model=ExecuteAssemblyTaskResponse
+)
 async def queue_execute_assembly_task(
     beacon_id: str,
     request_data: ExecuteAssemblyRequest,

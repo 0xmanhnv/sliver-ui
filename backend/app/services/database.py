@@ -86,14 +86,24 @@ async def seed_data(session: AsyncSession) -> None:
 
     # Create roles
     admin_role = Role(name="admin", description="Full system access")
-    operator_role = Role(name="operator", description="Can manage sessions and execute commands")
+    operator_role = Role(
+        name="operator", description="Can manage sessions and execute commands"
+    )
     viewer_role = Role(name="viewer", description="Read-only access")
 
     session.add_all([admin_role, operator_role, viewer_role])
     await session.flush()
 
     # Create permissions
-    resources = ["sessions", "beacons", "implants", "listeners", "files", "users", "audit"]
+    resources = [
+        "sessions",
+        "beacons",
+        "implants",
+        "listeners",
+        "files",
+        "users",
+        "audit",
+    ]
     actions = ["read", "write", "execute", "delete"]
 
     permissions = []
@@ -125,7 +135,8 @@ async def seed_data(session: AsyncSession) -> None:
     # Operator gets all except user management
     operator_perm_records = [
         {"role_id": operator_role.id, "permission_id": p.id}
-        for p in permissions if p.resource not in ["users", "audit"]
+        for p in permissions
+        if p.resource not in ["users", "audit"]
     ]
     if operator_perm_records:
         await session.execute(insert(role_permissions), operator_perm_records)
@@ -133,7 +144,8 @@ async def seed_data(session: AsyncSession) -> None:
     # Viewer gets read-only
     viewer_perm_records = [
         {"role_id": viewer_role.id, "permission_id": p.id}
-        for p in permissions if p.action == "read"
+        for p in permissions
+        if p.action == "read"
     ]
     if viewer_perm_records:
         await session.execute(insert(role_permissions), viewer_perm_records)
@@ -151,6 +163,10 @@ async def seed_data(session: AsyncSession) -> None:
     session.add(admin_user)
 
     await session.commit()
-    logger.info(f"Initial data seeded successfully (admin user: {settings.admin_username})")
+    logger.info(
+        f"Initial data seeded successfully (admin user: {settings.admin_username})"
+    )
     if settings.admin_password == "changeme123":
-        logger.warning("Using default admin password 'changeme123' - set ADMIN_PASSWORD env var!")
+        logger.warning(
+            "Using default admin password 'changeme123' - set ADMIN_PASSWORD env var!"
+        )

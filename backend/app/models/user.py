@@ -10,7 +10,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
 
-
 # Association table for Role-Permission many-to-many
 role_permissions = Table(
     "role_permissions",
@@ -49,8 +48,12 @@ class Permission(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    resource: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., sessions, beacons
-    action: Mapped[str] = mapped_column(String(20), nullable=False)  # e.g., read, write, execute
+    resource: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # e.g., sessions, beacons
+    action: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # e.g., read, write, execute
 
     # Relationships
     roles: Mapped[List["Role"]] = relationship(
@@ -67,18 +70,32 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
-    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False, index=True
+    )
+    email: Mapped[Optional[str]] = mapped_column(
+        String(255), unique=True, nullable=True
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=False)
+    role_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("roles.id"), nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    failed_login_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    locked_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Relationships
     role: Mapped["Role"] = relationship("Role", back_populates="users")
-    audit_logs: Mapped[List["AuditLog"]] = relationship("AuditLog", back_populates="user")
+    audit_logs: Mapped[List["AuditLog"]] = relationship(
+        "AuditLog", back_populates="user"
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
@@ -89,8 +106,8 @@ class User(Base, TimestampMixin):
             return False
 
         for perm in self.role.permissions:
-            resource_match = (perm.resource == resource or perm.resource == "*")
-            action_match = (perm.action == action or perm.action == "*")
+            resource_match = perm.resource == resource or perm.resource == "*"
+            action_match = perm.action == action or perm.action == "*"
             if resource_match and action_match:
                 return True
 

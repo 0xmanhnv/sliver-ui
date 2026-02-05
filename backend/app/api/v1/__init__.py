@@ -25,4 +25,6 @@ api_router.include_router(users_router, prefix="/users", tags=["Users"])
 api_router.include_router(notes_router, prefix="/notes", tags=["Notes & Tags"])
 api_router.include_router(armory_router, prefix="/armory", tags=["Armory"])
 api_router.include_router(cleanup_router, prefix="/cleanup", tags=["Cleanup"])
-api_router.include_router(browser_ops_router, prefix="/browser-ops", tags=["Browser Ops"])
+api_router.include_router(
+    browser_ops_router, prefix="/browser-ops", tags=["Browser Ops"]
+)

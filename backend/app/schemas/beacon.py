@@ -42,7 +42,9 @@ class BeaconList(BaseModel):
 class BeaconTaskRequest(BaseModel):
     """Request to queue a task for a beacon"""
 
-    task_type: str = Field(..., description="Task type: shell, execute, download, upload, etc.")
+    task_type: str = Field(
+        ..., description="Task type: shell, execute, download, upload, etc."
+    )
     # Shell task
     command: Optional[str] = Field(None, description="Shell command")
     # Execute task

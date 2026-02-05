@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 # Rate limit config per path prefix
 RATE_LIMITS: Dict[str, Tuple[int, int]] = {
-    "/api/v1/auth/login": (5, 60),      # 5 requests per 60s
-    "/api/v1/auth/refresh": (10, 60),    # 10 requests per 60s
+    "/api/v1/auth/login": (5, 60),  # 5 requests per 60s
+    "/api/v1/auth/refresh": (10, 60),  # 10 requests per 60s
 }
 
 # Default rate limit for all other API endpoints
@@ -53,8 +53,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return
         self._last_cleanup = now
         expired_keys = [
-            k for k, v in self._requests.items()
-            if not v or v[-1] < now - 120
+            k for k, v in self._requests.items() if not v or v[-1] < now - 120
         ]
         for k in expired_keys:
             del self._requests[k]
@@ -71,9 +70,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         now = time.monotonic()
 
         # Clean old timestamps
-        self._requests[key] = [
-            t for t in self._requests[key] if t > now - window
-        ]
+        self._requests[key] = [t for t in self._requests[key] if t > now - window]
 
         if len(self._requests[key]) >= max_requests:
             logger.warning(f"Rate limit exceeded: {client_ip} on {path}")

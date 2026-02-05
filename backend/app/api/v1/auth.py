@@ -62,7 +62,9 @@ async def login(
             # Lock account after 5 failed attempts (15 min lockout)
             if user.failed_login_attempts >= 5:
                 user.locked_until = datetime.utcnow() + timedelta(minutes=15)
-                logger.warning(f"Account {user.username} locked after {user.failed_login_attempts} failed attempts")
+                logger.warning(
+                    f"Account {user.username} locked after {user.failed_login_attempts} failed attempts"
+                )
             await db.commit()
 
         raise HTTPException(
@@ -99,7 +101,9 @@ async def login(
     db.add(audit_log)
     await db.commit()
 
-    logger.info(f"User {user.username} logged in from {request.client.host if request.client else 'unknown'}")
+    logger.info(
+        f"User {user.username} logged in from {request.client.host if request.client else 'unknown'}"
+    )
 
     return Token(
         access_token=access_token,
@@ -129,9 +133,7 @@ async def refresh_token(
 
     # Verify user still exists and is active
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == int(user_id))
+        select(User).options(selectinload(User.role)).where(User.id == int(user_id))
     )
     user = result.scalar_one_or_none()
 

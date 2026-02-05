@@ -55,11 +55,10 @@ async def get_current_user(
 
     # Get user from database with role and permissions eager-loaded
     from app.models import Role
+
     result = await db.execute(
         select(User)
-        .options(
-            selectinload(User.role).selectinload(Role.permissions)
-        )
+        .options(selectinload(User.role).selectinload(Role.permissions))
         .where(User.id == int(user_id))
     )
     user = result.scalar_one_or_none()
@@ -114,6 +113,7 @@ def require_permission(resource: str, action: str):
         ):
             ...
     """
+
     async def permission_checker(
         current_user: User = Depends(get_current_user),
     ) -> User:
@@ -138,6 +138,7 @@ def require_role(*roles: str):
         ):
             ...
     """
+
     async def role_checker(
         current_user: User = Depends(get_current_user),
     ) -> User:

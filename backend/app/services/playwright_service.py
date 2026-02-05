@@ -102,6 +102,7 @@ class PlaywrightService:
                         pw_cookie["expires"] = int(c["expires"])
                     else:
                         from datetime import datetime
+
                         dt = datetime.fromisoformat(
                             str(c["expires"]).replace("Z", "+00:00")
                         )
@@ -208,16 +209,20 @@ class PlaywrightService:
         pw_cookies = await session.context.cookies()
         cookies = []
         for c in pw_cookies:
-            cookies.append({
-                "domain": c.get("domain", ""),
-                "name": c.get("name", ""),
-                "value": c.get("value", ""),
-                "path": c.get("path", "/"),
-                "expires": str(int(c.get("expires", 0))) if c.get("expires") else None,
-                "secure": c.get("secure", False),
-                "http_only": c.get("httpOnly", False),
-                "same_site": c.get("sameSite"),
-            })
+            cookies.append(
+                {
+                    "domain": c.get("domain", ""),
+                    "name": c.get("name", ""),
+                    "value": c.get("value", ""),
+                    "path": c.get("path", "/"),
+                    "expires": (
+                        str(int(c.get("expires", 0))) if c.get("expires") else None
+                    ),
+                    "secure": c.get("secure", False),
+                    "http_only": c.get("httpOnly", False),
+                    "same_site": c.get("sameSite"),
+                }
+            )
 
         return cookies
 

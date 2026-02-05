@@ -83,22 +83,24 @@ async def sync_sliver_events():
                 # New sessions
                 new_sessions = current_sessions - previous_sessions
                 for session_id in new_sessions:
-                    session = next(
-                        (s for s in sessions if s["id"] == session_id), None
-                    )
+                    session = next((s for s in sessions if s["id"] == session_id), None)
                     if session:
-                        await manager.broadcast({
-                            "event": "session.new",
-                            "data": session,
-                        })
+                        await manager.broadcast(
+                            {
+                                "event": "session.new",
+                                "data": session,
+                            }
+                        )
 
                 # Lost sessions
                 lost_sessions = previous_sessions - current_sessions
                 for session_id in lost_sessions:
-                    await manager.broadcast({
-                        "event": "session.lost",
-                        "data": {"id": session_id},
-                    })
+                    await manager.broadcast(
+                        {
+                            "event": "session.lost",
+                            "data": {"id": session_id},
+                        }
+                    )
 
                 previous_sessions = current_sessions
 
@@ -111,14 +113,14 @@ async def sync_sliver_events():
                 # New beacons
                 new_beacons = current_beacons - previous_beacons
                 for beacon_id in new_beacons:
-                    beacon = next(
-                        (b for b in beacons if b["id"] == beacon_id), None
-                    )
+                    beacon = next((b for b in beacons if b["id"] == beacon_id), None)
                     if beacon:
-                        await manager.broadcast({
-                            "event": "beacon.new",
-                            "data": beacon,
-                        })
+                        await manager.broadcast(
+                            {
+                                "event": "beacon.new",
+                                "data": beacon,
+                            }
+                        )
 
                 previous_beacons = current_beacons
 
@@ -156,13 +158,15 @@ async def websocket_endpoint(
 
     try:
         # Send initial state
-        await websocket.send_json({
-            "event": "connected",
-            "data": {
-                "client_id": client_id,
-                "sliver_connected": sliver_manager.is_connected,
-            },
-        })
+        await websocket.send_json(
+            {
+                "event": "connected",
+                "data": {
+                    "client_id": client_id,
+                    "sliver_connected": sliver_manager.is_connected,
+                },
+            }
+        )
 
         # Keep connection alive and handle client messages
         while True:
@@ -181,20 +185,24 @@ async def websocket_endpoint(
                 elif event_type == "subscribe":
                     # Handle subscription requests
                     channels = message.get("channels", [])
-                    await websocket.send_json({
-                        "event": "subscribed",
-                        "data": {"channels": channels},
-                    })
+                    await websocket.send_json(
+                        {
+                            "event": "subscribed",
+                            "data": {"channels": channels},
+                        }
+                    )
 
             except asyncio.TimeoutError:
                 # Send ping to keep alive
                 await websocket.send_json({"event": "ping"})
 
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "event": "error",
-                    "data": {"message": "Invalid JSON"},
-                })
+                await websocket.send_json(
+                    {
+                        "event": "error",
+                        "data": {"message": "Invalid JSON"},
+                    }
+                )
 
     except WebSocketDisconnect:
         await manager.disconnect(client_id)

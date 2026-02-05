@@ -31,14 +31,17 @@ def _cleanup_implant_cache():
     """Remove expired entries and enforce max size"""
     now = datetime.now(timezone.utc)
     expired = [
-        k for k, v in _implant_cache.items()
+        k
+        for k, v in _implant_cache.items()
         if (now - v["generated_at"]).total_seconds() > _CACHE_TTL_SECONDS
     ]
     for k in expired:
         del _implant_cache[k]
     # Evict oldest if over max size
     while len(_implant_cache) > _CACHE_MAX_SIZE:
-        oldest_key = min(_implant_cache, key=lambda k: _implant_cache[k]["generated_at"])
+        oldest_key = min(
+            _implant_cache, key=lambda k: _implant_cache[k]["generated_at"]
+        )
         del _implant_cache[oldest_key]
 
 
@@ -150,9 +153,7 @@ async def download_implant(
     return StreamingResponse(
         io.BytesIO(cached["data"]),
         media_type="application/octet-stream",
-        headers={
-            "Content-Disposition": f'attachment; filename="{cached["filename"]}"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="{cached["filename"]}"'},
     )
 
 

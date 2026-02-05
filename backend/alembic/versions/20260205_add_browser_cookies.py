@@ -37,7 +37,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
         ),
-        sa.Column("extracted_by", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column(
+            "extracted_by", sa.Integer(), sa.ForeignKey("users.id"), nullable=False
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_browser_cookies_session_id", "browser_cookies", ["session_id"])

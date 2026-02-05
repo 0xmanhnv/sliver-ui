@@ -17,6 +17,7 @@ router = APIRouter()
 # Schemas
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class StaleSession(BaseModel):
     id: str
     name: str
@@ -62,6 +63,7 @@ class KillAllResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Endpoints
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/status", response_model=CleanupStatusResponse)
 async def get_cleanup_status(
@@ -192,9 +194,9 @@ async def kill_everything(
             "beacons_killed": len(beacons_result["success"]),
             "jobs_killed": len(jobs_result["success"]),
             "failed": (
-                sessions_result["failed"] +
-                beacons_result["failed"] +
-                jobs_result["failed"]
+                sessions_result["failed"]
+                + beacons_result["failed"]
+                + jobs_result["failed"]
             ),
         }
     except SliverCommandError as e:

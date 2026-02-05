@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Try to import sliver-py
 try:
     from sliver import SliverClient, SliverClientConfig
+
     SLIVER_AVAILABLE = True
 except ImportError:
     SLIVER_AVAILABLE = False
@@ -137,8 +138,7 @@ class SliverManager:
         try:
             session = await self._client.interact_session(session_id)
             result = await asyncio.wait_for(
-                session.execute(command, output=True),
-                timeout=timeout
+                session.execute(command, output=True), timeout=timeout
             )
             return {
                 "output": result.Stdout.decode() if result.Stdout else "",
@@ -276,7 +276,9 @@ class SliverManager:
         except Exception as e:
             raise SliverCommandError(f"Failed to queue download task: {str(e)}")
 
-    async def beacon_upload(self, beacon_id: str, remote_path: str, data: bytes) -> dict:
+    async def beacon_upload(
+        self, beacon_id: str, remote_path: str, data: bytes
+    ) -> dict:
         """Queue upload task on beacon"""
         try:
             beacon = await self._client.interact_beacon(beacon_id)
@@ -321,24 +323,28 @@ class SliverManager:
             "beacon_id": task.BeaconID,
             "created_at": task.CreatedAt,
             "state": task.State,
-            "sent_at": task.SentAt if hasattr(task, 'SentAt') else None,
-            "completed_at": task.CompletedAt if hasattr(task, 'CompletedAt') else None,
-            "request": task.Request if hasattr(task, 'Request') else None,
-            "response": task.Response if hasattr(task, 'Response') else None,
-            "description": task.Description if hasattr(task, 'Description') else None,
+            "sent_at": task.SentAt if hasattr(task, "SentAt") else None,
+            "completed_at": task.CompletedAt if hasattr(task, "CompletedAt") else None,
+            "request": task.Request if hasattr(task, "Request") else None,
+            "response": task.Response if hasattr(task, "Response") else None,
+            "description": task.Description if hasattr(task, "Description") else None,
         }
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Pivoting Operations (SOCKS & Port Forwarding)
     # ═══════════════════════════════════════════════════════════════════════════
 
-    async def start_socks_proxy(self, session_id: str, host: str = "127.0.0.1", port: int = 1080) -> dict:
+    async def start_socks_proxy(
+        self, session_id: str, host: str = "127.0.0.1", port: int = 1080
+    ) -> dict:
         """Start SOCKS5 proxy through session"""
         try:
             session = await self._client.interact_session(session_id)
             result = await session.socks5(host=host, port=port)
             return {
-                "id": str(result.TunnelID) if hasattr(result, 'TunnelID') else str(port),
+                "id": (
+                    str(result.TunnelID) if hasattr(result, "TunnelID") else str(port)
+                ),
                 "host": host,
                 "port": port,
                 "session_id": session_id,
@@ -374,9 +380,15 @@ class SliverManager:
                 local_port=local_port,
             )
             return {
-                "id": str(result.TunnelID) if hasattr(result, 'TunnelID') else f"{local_port}",
+                "id": (
+                    str(result.TunnelID)
+                    if hasattr(result, "TunnelID")
+                    else f"{local_port}"
+                ),
                 "local_host": local_host,
-                "local_port": result.LocalPort if hasattr(result, 'LocalPort') else local_port,
+                "local_port": (
+                    result.LocalPort if hasattr(result, "LocalPort") else local_port
+                ),
                 "remote_host": remote_host,
                 "remote_port": remote_port,
                 "session_id": session_id,
@@ -538,9 +550,13 @@ class SliverManager:
         try:
             # Build implant config based on type
             if config.get("beacon", False):
-                implant = await self._client.generate_beacon(**self._build_implant_config(config))
+                implant = await self._client.generate_beacon(
+                    **self._build_implant_config(config)
+                )
             else:
-                implant = await self._client.generate(**self._build_implant_config(config))
+                implant = await self._client.generate(
+                    **self._build_implant_config(config)
+                )
 
             return implant.File.Data
         except Exception as e:
@@ -648,7 +664,9 @@ class SliverManager:
                 "domains": domains,
             }
         except Exception as e:
-            logger.error(f"Error converting job to dict: {e}, job type: {type(job)}, job: {job}")
+            logger.error(
+                f"Error converting job to dict: {e}, job type: {type(job)}, job: {job}"
+            )
             # Return minimal valid response
             return {
                 "id": "error",
@@ -693,11 +711,11 @@ class SliverManager:
         # Import operator config using sliver-client import command
         try:
             result = subprocess.run(
-                ['/usr/local/bin/sliver-client', 'import', str(config_path)],
+                ["/usr/local/bin/sliver-client", "import", str(config_path)],
                 capture_output=True,
                 text=True,
                 timeout=30,
-                env={**os.environ, "HOME": str(Path.home())}
+                env={**os.environ, "HOME": str(Path.home())},
             )
             if result.returncode == 0:
                 logger.info(f"Imported operator config: {result.stdout}")
@@ -721,7 +739,7 @@ class SliverManager:
         # Create a temporary rc script with the command
         # sliver-client uses --rc to run commands from a file
         # Add 'exit' at the end to ensure the client closes after running the command
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sliver', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sliver", delete=False) as f:
             f.write(f"{command}\n")
             f.write("exit\n")
             rc_file = f.name
@@ -734,17 +752,17 @@ class SliverManager:
 
         try:
             process = await asyncio.create_subprocess_exec(
-                '/usr/local/bin/sliver-client',
-                'console',
-                '--rc', rc_file,
+                "/usr/local/bin/sliver-client",
+                "console",
+                "--rc",
+                rc_file,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=env
+                env=env,
             )
 
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=timeout
+                process.communicate(), timeout=timeout
             )
 
             # Clean up rc file
@@ -758,7 +776,9 @@ class SliverManager:
 
             # Check for errors in output
             if process.returncode != 0 and not output:
-                raise SliverCommandError(f"sliver-client error: {error or 'Unknown error'}")
+                raise SliverCommandError(
+                    f"sliver-client error: {error or 'Unknown error'}"
+                )
 
             # Return combined output (sliver often writes to both stdout and stderr)
             return output or error
@@ -784,10 +804,12 @@ class SliverManager:
 
         try:
             # Get installed aliases
-            aliases_output = await self._run_sliver_client_command("aliases", timeout=30)
+            aliases_output = await self._run_sliver_client_command(
+                "aliases", timeout=30
+            )
             aliases_output = self._strip_ansi(aliases_output)
-            for line in aliases_output.split('\n'):
-                if '✅' in line or 'true' in line.lower():
+            for line in aliases_output.split("\n"):
+                if "✅" in line or "true" in line.lower():
                     parts = line.split()
                     if len(parts) >= 2:
                         installed.add(parts[0].lower())
@@ -799,8 +821,8 @@ class SliverManager:
             # Get installed extensions
             ext_output = await self._run_sliver_client_command("extensions", timeout=30)
             ext_output = self._strip_ansi(ext_output)
-            for line in ext_output.split('\n'):
-                if '✅' in line or 'installed' in line.lower():
+            for line in ext_output.split("\n"):
+                if "✅" in line or "installed" in line.lower():
                     parts = line.split()
                     if parts:
                         installed.add(parts[0].lower())
@@ -819,14 +841,19 @@ class SliverManager:
         # Check cache first
         now = time.time()
         if not force_refresh and self.__class__._armory_cache is not None:
-            if now - self.__class__._armory_cache_time < self.__class__._armory_cache_ttl:
+            if (
+                now - self.__class__._armory_cache_time
+                < self.__class__._armory_cache_ttl
+            ):
                 logger.debug("Returning cached armory data")
                 # Still update installed status from quick aliases/extensions check
                 try:
                     installed = await self._get_installed_packages()
                     for pkg in self.__class__._armory_cache:
-                        pkg['installed'] = pkg.get('name', '').lower() in installed or \
-                                          pkg.get('command_name', '').lower() in installed
+                        pkg["installed"] = (
+                            pkg.get("name", "").lower() in installed
+                            or pkg.get("command_name", "").lower() in installed
+                        )
                 except Exception:
                     pass
                 return self.__class__._armory_cache
@@ -841,8 +868,10 @@ class SliverManager:
             try:
                 installed = await self._get_installed_packages()
                 for pkg in packages:
-                    pkg['installed'] = pkg.get('name', '').lower() in installed or \
-                                      pkg.get('command_name', '').lower() in installed
+                    pkg["installed"] = (
+                        pkg.get("name", "").lower() in installed
+                        or pkg.get("command_name", "").lower() in installed
+                    )
             except Exception as e:
                 logger.warning(f"Failed to check installed packages: {e}")
 
@@ -862,9 +891,10 @@ class SliverManager:
     def _strip_ansi(self, text: str) -> str:
         """Strip ANSI escape codes from text"""
         import re
+
         # Remove ANSI escape sequences
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        return ansi_escape.sub('', text)
+        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+        return ansi_escape.sub("", text)
 
     def _parse_armory_output(self, output: str) -> List[dict]:
         """Parse armory command output into structured data"""
@@ -874,7 +904,7 @@ class SliverManager:
         output = self._strip_ansi(output)
 
         packages = []
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
 
         # Find the separator line to know where data starts
         in_table = False
@@ -884,7 +914,7 @@ class SliverManager:
                 continue
 
             # Check for separator line (=== or ---)
-            if re.match(r'^[=\-─━]+\s*[=\-─━]*', line.strip()):
+            if re.match(r"^[=\-─━]+\s*[=\-─━]*", line.strip()):
                 in_table = True
                 continue
 
@@ -896,8 +926,7 @@ class SliverManager:
             # Format: "Default   bof-roast   v0.0.2    Extension   Help text..."
             # Use regex to match: word, spaces, word, spaces, version, spaces, type, spaces, rest
             match = re.match(
-                r'^(\S+)\s+(\S+)\s+(v?[\d\.]+\S*)\s+(\S+)(?:\s+(.*))?$',
-                line.strip()
+                r"^(\S+)\s+(\S+)\s+(v?[\d\.]+\S*)\s+(\S+)(?:\s+(.*))?$", line.strip()
             )
 
             if match:
@@ -908,19 +937,21 @@ class SliverManager:
                 help_text = match.group(5).strip() if match.group(5) else ""
 
                 # Skip if it looks like a header
-                if armory_name.lower() in ['armory', 'name', 'package', 'packages']:
+                if armory_name.lower() in ["armory", "name", "package", "packages"]:
                     continue
 
-                packages.append({
-                    "name": command_name,
-                    "command_name": command_name,
-                    "version": version,
-                    "installed": False,
-                    "type": pkg_type.lower() if pkg_type else "alias",
-                    "repo_url": f"https://github.com/sliverarmory/{command_name}",
-                    "help": help_text,
-                    "armory": armory_name,
-                })
+                packages.append(
+                    {
+                        "name": command_name,
+                        "command_name": command_name,
+                        "version": version,
+                        "installed": False,
+                        "type": pkg_type.lower() if pkg_type else "alias",
+                        "repo_url": f"https://github.com/sliverarmory/{command_name}",
+                        "help": help_text,
+                        "armory": armory_name,
+                    }
+                )
 
         logger.info(f"Parsed {len(packages)} packages from armory output")
         return packages if packages else self._get_mock_armory()
@@ -930,69 +961,405 @@ class SliverManager:
         # Complete list of official Sliver Armory packages from https://github.com/sliverarmory
         packages = [
             # GhostPack Tools (C# offensive tools)
-            {"name": "rubeus", "command_name": "rubeus", "version": "2.3.1", "type": "alias", "repo_url": "https://github.com/sliverarmory/rubeus", "help": "Kerberos abuse toolkit"},
-            {"name": "seatbelt", "command_name": "seatbelt", "version": "1.2.1", "type": "alias", "repo_url": "https://github.com/sliverarmory/seatbelt", "help": "Host security survey"},
-            {"name": "certify", "command_name": "certify", "version": "1.1.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/certify", "help": "AD certificate abuse"},
-            {"name": "sharpup", "command_name": "sharpup", "version": "1.1.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpup", "help": "Privilege escalation checks"},
-            {"name": "sharpdpapi", "command_name": "sharpdpapi", "version": "1.12.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpdpapi", "help": "DPAPI secret extraction"},
-            {"name": "sharpwmi", "command_name": "sharpwmi", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpwmi", "help": "WMI lateral movement"},
-            {"name": "sharpchrome", "command_name": "sharpchrome", "version": "1.8.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpchrome", "help": "Chrome credential extraction"},
-            {"name": "lockless", "command_name": "lockless", "version": "2.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/lockless", "help": "Copy locked files"},
-            {"name": "sharpshares", "command_name": "sharpshares", "version": "2.5.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpshares", "help": "Enumerate network shares"},
-
+            {
+                "name": "rubeus",
+                "command_name": "rubeus",
+                "version": "2.3.1",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/rubeus",
+                "help": "Kerberos abuse toolkit",
+            },
+            {
+                "name": "seatbelt",
+                "command_name": "seatbelt",
+                "version": "1.2.1",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/seatbelt",
+                "help": "Host security survey",
+            },
+            {
+                "name": "certify",
+                "command_name": "certify",
+                "version": "1.1.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/certify",
+                "help": "AD certificate abuse",
+            },
+            {
+                "name": "sharpup",
+                "command_name": "sharpup",
+                "version": "1.1.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpup",
+                "help": "Privilege escalation checks",
+            },
+            {
+                "name": "sharpdpapi",
+                "command_name": "sharpdpapi",
+                "version": "1.12.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpdpapi",
+                "help": "DPAPI secret extraction",
+            },
+            {
+                "name": "sharpwmi",
+                "command_name": "sharpwmi",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpwmi",
+                "help": "WMI lateral movement",
+            },
+            {
+                "name": "sharpchrome",
+                "command_name": "sharpchrome",
+                "version": "1.8.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpchrome",
+                "help": "Chrome credential extraction",
+            },
+            {
+                "name": "lockless",
+                "command_name": "lockless",
+                "version": "2.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/lockless",
+                "help": "Copy locked files",
+            },
+            {
+                "name": "sharpshares",
+                "command_name": "sharpshares",
+                "version": "2.5.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpshares",
+                "help": "Enumerate network shares",
+            },
             # Situational Awareness & Recon
-            {"name": "sharphound", "command_name": "sharphound", "version": "2.3.3", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharphound", "help": "BloodHound data collector"},
-            {"name": "sharpview", "command_name": "sharpview", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpview", "help": "PowerView in C#"},
-            {"name": "sauron", "command_name": "sa", "version": "1.0.2", "type": "extension", "repo_url": "https://github.com/sliverarmory/cs-situational-awareness-bof", "help": "Situational awareness BOFs"},
-            {"name": "sqlrecon", "command_name": "sqlrecon", "version": "3.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sqlrecon", "help": "MS SQL recon and exploitation"},
-            {"name": "adcs", "command_name": "adcs", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/adcs", "help": "AD Certificate Services recon"},
-
+            {
+                "name": "sharphound",
+                "command_name": "sharphound",
+                "version": "2.3.3",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharphound",
+                "help": "BloodHound data collector",
+            },
+            {
+                "name": "sharpview",
+                "command_name": "sharpview",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpview",
+                "help": "PowerView in C#",
+            },
+            {
+                "name": "sauron",
+                "command_name": "sa",
+                "version": "1.0.2",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/cs-situational-awareness-bof",
+                "help": "Situational awareness BOFs",
+            },
+            {
+                "name": "sqlrecon",
+                "command_name": "sqlrecon",
+                "version": "3.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sqlrecon",
+                "help": "MS SQL recon and exploitation",
+            },
+            {
+                "name": "adcs",
+                "command_name": "adcs",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/adcs",
+                "help": "AD Certificate Services recon",
+            },
             # Credential Access
-            {"name": "nanodump", "command_name": "nanodump", "version": "1.0.4", "type": "alias", "repo_url": "https://github.com/sliverarmory/nanodump", "help": "LSASS dump tool"},
-            {"name": "safetykatz", "command_name": "safetykatz", "version": "1.2.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/safetykatz", "help": "Mimikatz via DPAPI"},
-            {"name": "sharpkatz", "command_name": "sharpkatz", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpkatz", "help": "C# Mimikatz port"},
-            {"name": "inveigh", "command_name": "inveigh", "version": "2.0.10", "type": "alias", "repo_url": "https://github.com/sliverarmory/inveigh", "help": "LLMNR/NBNS/mDNS spoofer"},
-
+            {
+                "name": "nanodump",
+                "command_name": "nanodump",
+                "version": "1.0.4",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/nanodump",
+                "help": "LSASS dump tool",
+            },
+            {
+                "name": "safetykatz",
+                "command_name": "safetykatz",
+                "version": "1.2.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/safetykatz",
+                "help": "Mimikatz via DPAPI",
+            },
+            {
+                "name": "sharpkatz",
+                "command_name": "sharpkatz",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpkatz",
+                "help": "C# Mimikatz port",
+            },
+            {
+                "name": "inveigh",
+                "command_name": "inveigh",
+                "version": "2.0.10",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/inveigh",
+                "help": "LLMNR/NBNS/mDNS spoofer",
+            },
             # Persistence & Execution
-            {"name": "sharpersist", "command_name": "sharpersist", "version": "1.0.4", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpersist", "help": "Windows persistence toolkit"},
-            {"name": "sharptask", "command_name": "sharptask", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharptask", "help": "Scheduled task management"},
-            {"name": "sharpsc", "command_name": "sharpsc", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpsc", "help": "Service management"},
-            {"name": "sharpgpo", "command_name": "sharpgpo", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpgpo", "help": "GPO abuse"},
-            {"name": "sharpsccm", "command_name": "sharpsccm", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpsccm", "help": "SCCM recon and abuse"},
-            {"name": "sharpreg", "command_name": "sharpreg", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpreg", "help": "Remote registry ops"},
-
+            {
+                "name": "sharpersist",
+                "command_name": "sharpersist",
+                "version": "1.0.4",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpersist",
+                "help": "Windows persistence toolkit",
+            },
+            {
+                "name": "sharptask",
+                "command_name": "sharptask",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharptask",
+                "help": "Scheduled task management",
+            },
+            {
+                "name": "sharpsc",
+                "command_name": "sharpsc",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpsc",
+                "help": "Service management",
+            },
+            {
+                "name": "sharpgpo",
+                "command_name": "sharpgpo",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpgpo",
+                "help": "GPO abuse",
+            },
+            {
+                "name": "sharpsccm",
+                "command_name": "sharpsccm",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpsccm",
+                "help": "SCCM recon and abuse",
+            },
+            {
+                "name": "sharpreg",
+                "command_name": "sharpreg",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpreg",
+                "help": "Remote registry ops",
+            },
             # Lateral Movement
-            {"name": "sharppsexec", "command_name": "sharppsexec", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharppsexec", "help": "PsExec in C#"},
-            {"name": "sharprdp", "command_name": "sharprdp", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharprdp", "help": "RDP hijacking"},
-            {"name": "krbrelayup", "command_name": "krbrelayup", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/krbrelayup", "help": "Kerberos relay privesc"},
-            {"name": "passthehash", "command_name": "pth", "version": "1.0.0", "type": "extension", "repo_url": "https://github.com/sliverarmory/passthehash", "help": "Pass-the-hash attacks"},
-
+            {
+                "name": "sharppsexec",
+                "command_name": "sharppsexec",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharppsexec",
+                "help": "PsExec in C#",
+            },
+            {
+                "name": "sharprdp",
+                "command_name": "sharprdp",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharprdp",
+                "help": "RDP hijacking",
+            },
+            {
+                "name": "krbrelayup",
+                "command_name": "krbrelayup",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/krbrelayup",
+                "help": "Kerberos relay privesc",
+            },
+            {
+                "name": "passthehash",
+                "command_name": "pth",
+                "version": "1.0.0",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/passthehash",
+                "help": "Pass-the-hash attacks",
+            },
             # Defense Evasion
-            {"name": "portbender", "command_name": "portbender", "version": "1.0.2", "type": "extension", "repo_url": "https://github.com/sliverarmory/sliver-portbender", "help": "TCP port redirection"},
-            {"name": "coffloader", "command_name": "coff", "version": "1.1.0", "type": "extension", "repo_url": "https://github.com/sliverarmory/coffloader", "help": "COFF/BOF loader"},
-            {"name": "sharpmapexec", "command_name": "sharpmapexec", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpmapexec", "help": "CrackMapExec in C#"},
-            {"name": "staykit", "command_name": "staykit", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/staykit", "help": "Post-exploitation kit"},
-
+            {
+                "name": "portbender",
+                "command_name": "portbender",
+                "version": "1.0.2",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/sliver-portbender",
+                "help": "TCP port redirection",
+            },
+            {
+                "name": "coffloader",
+                "command_name": "coff",
+                "version": "1.1.0",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/coffloader",
+                "help": "COFF/BOF loader",
+            },
+            {
+                "name": "sharpmapexec",
+                "command_name": "sharpmapexec",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpmapexec",
+                "help": "CrackMapExec in C#",
+            },
+            {
+                "name": "staykit",
+                "command_name": "staykit",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/staykit",
+                "help": "Post-exploitation kit",
+            },
             # BOF Bundles
-            {"name": "cs-situational-awareness-bof", "command_name": "csbof", "version": "1.0.4", "type": "extension", "repo_url": "https://github.com/sliverarmory/cs-situational-awareness-bof", "help": "Cobalt Strike SA BOFs"},
-            {"name": "windowsvulnscan", "command_name": "wvs", "version": "1.0.0", "type": "extension", "repo_url": "https://github.com/sliverarmory/windowsvulnscan", "help": "Windows vuln scanner BOF"},
-            {"name": "bof-registry", "command_name": "bof-reg", "version": "1.0.0", "type": "extension", "repo_url": "https://github.com/sliverarmory/bof-registry", "help": "Registry manipulation BOF"},
-            {"name": "bof-roast", "command_name": "bof-roast", "version": "0.0.2", "type": "extension", "repo_url": "https://github.com/sliverarmory/bof-roast", "help": "Kerberoasting BOF"},
-
+            {
+                "name": "cs-situational-awareness-bof",
+                "command_name": "csbof",
+                "version": "1.0.4",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/cs-situational-awareness-bof",
+                "help": "Cobalt Strike SA BOFs",
+            },
+            {
+                "name": "windowsvulnscan",
+                "command_name": "wvs",
+                "version": "1.0.0",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/windowsvulnscan",
+                "help": "Windows vuln scanner BOF",
+            },
+            {
+                "name": "bof-registry",
+                "command_name": "bof-reg",
+                "version": "1.0.0",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/bof-registry",
+                "help": "Registry manipulation BOF",
+            },
+            {
+                "name": "bof-roast",
+                "command_name": "bof-roast",
+                "version": "0.0.2",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/bof-roast",
+                "help": "Kerberoasting BOF",
+            },
             # Other Tools
-            {"name": "nopowershell", "command_name": "nps", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/nopowershell", "help": "PowerShell without powershell.exe"},
-            {"name": "sharpprinter", "command_name": "sharpprinter", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpprinter", "help": "Printer vulnerability scanner"},
-            {"name": "sharphose", "command_name": "sharphose", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharphose", "help": "Password spraying"},
-            {"name": "kerbrute", "command_name": "kerbrute", "version": "1.0.3", "type": "alias", "repo_url": "https://github.com/sliverarmory/kerbrute", "help": "Kerberos brute force"},
-            {"name": "sharpsniper", "command_name": "sharpsniper", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpsniper", "help": "Find user logons"},
-            {"name": "sharpspray", "command_name": "sharpspray", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpspray", "help": "Password spraying"},
-            {"name": "sharpwebserver", "command_name": "sharpwebserver", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpwebserver", "help": "Simple web server"},
-            {"name": "sliver-crackstation", "command_name": "crackstation", "version": "1.0.0", "type": "extension", "repo_url": "https://github.com/sliverarmory/sliver-crackstation", "help": "Distributed password cracking"},
-            {"name": "sharpsocks", "command_name": "sharpsocks", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpsocks", "help": "SOCKS proxy"},
-            {"name": "sharptoken", "command_name": "sharptoken", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharptoken", "help": "Token manipulation"},
-            {"name": "sharpzerologon", "command_name": "sharpzerologon", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpzerologon", "help": "ZeroLogon (CVE-2020-1472)"},
-            {"name": "sharpadidnsdump", "command_name": "sharpadidnsdump", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpadidnsdump", "help": "Dump ADIDNS records"},
-            {"name": "sharpcloud", "command_name": "sharpcloud", "version": "1.0.0", "type": "alias", "repo_url": "https://github.com/sliverarmory/sharpcloud", "help": "Cloud credential finder"},
+            {
+                "name": "nopowershell",
+                "command_name": "nps",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/nopowershell",
+                "help": "PowerShell without powershell.exe",
+            },
+            {
+                "name": "sharpprinter",
+                "command_name": "sharpprinter",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpprinter",
+                "help": "Printer vulnerability scanner",
+            },
+            {
+                "name": "sharphose",
+                "command_name": "sharphose",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharphose",
+                "help": "Password spraying",
+            },
+            {
+                "name": "kerbrute",
+                "command_name": "kerbrute",
+                "version": "1.0.3",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/kerbrute",
+                "help": "Kerberos brute force",
+            },
+            {
+                "name": "sharpsniper",
+                "command_name": "sharpsniper",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpsniper",
+                "help": "Find user logons",
+            },
+            {
+                "name": "sharpspray",
+                "command_name": "sharpspray",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpspray",
+                "help": "Password spraying",
+            },
+            {
+                "name": "sharpwebserver",
+                "command_name": "sharpwebserver",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpwebserver",
+                "help": "Simple web server",
+            },
+            {
+                "name": "sliver-crackstation",
+                "command_name": "crackstation",
+                "version": "1.0.0",
+                "type": "extension",
+                "repo_url": "https://github.com/sliverarmory/sliver-crackstation",
+                "help": "Distributed password cracking",
+            },
+            {
+                "name": "sharpsocks",
+                "command_name": "sharpsocks",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpsocks",
+                "help": "SOCKS proxy",
+            },
+            {
+                "name": "sharptoken",
+                "command_name": "sharptoken",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharptoken",
+                "help": "Token manipulation",
+            },
+            {
+                "name": "sharpzerologon",
+                "command_name": "sharpzerologon",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpzerologon",
+                "help": "ZeroLogon (CVE-2020-1472)",
+            },
+            {
+                "name": "sharpadidnsdump",
+                "command_name": "sharpadidnsdump",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpadidnsdump",
+                "help": "Dump ADIDNS records",
+            },
+            {
+                "name": "sharpcloud",
+                "command_name": "sharpcloud",
+                "version": "1.0.0",
+                "type": "alias",
+                "repo_url": "https://github.com/sliverarmory/sharpcloud",
+                "help": "Cloud credential finder",
+            },
         ]
         # Add installed=False to all packages
         for pkg in packages:
@@ -1003,13 +1370,13 @@ class SliverManager:
     async def install_armory_package(self, package_name: str) -> dict:
         """Install an armory package using sliver-client CLI"""
         # Validate package name to prevent command injection
-        if not package_name.replace('-', '').replace('_', '').isalnum():
+        if not package_name.replace("-", "").replace("_", "").isalnum():
             raise SliverCommandError(f"Invalid package name: {package_name}")
 
         try:
             output = await self._run_sliver_client_command(
                 f"armory install {package_name}",
-                timeout=300  # Installation can take a while
+                timeout=300,  # Installation can take a while
             )
             clean_output = self._strip_ansi(output)
             logger.info(f"Armory install output: {clean_output}")
@@ -1023,11 +1390,15 @@ class SliverManager:
                 "No indexes found",
                 "rate limit",
             ]
-            is_error = any(err.lower() in clean_output.lower() for err in error_indicators)
+            is_error = any(
+                err.lower() in clean_output.lower() for err in error_indicators
+            )
 
             if is_error:
                 # Installation failed
-                raise SliverCommandError(f"Failed to install {package_name}: {clean_output}")
+                raise SliverCommandError(
+                    f"Failed to install {package_name}: {clean_output}"
+                )
 
             # Invalidate cache after successful install
             self.__class__._armory_cache = None
@@ -1036,7 +1407,7 @@ class SliverManager:
                 "success": True,
                 "package": package_name,
                 "message": f"Successfully installed {package_name}",
-                "output": clean_output
+                "output": clean_output,
             }
         except SliverCommandError:
             raise
@@ -1046,11 +1417,13 @@ class SliverManager:
     async def uninstall_armory_package(self, package_name: str) -> dict:
         """Uninstall an armory package using sliver-client CLI"""
         # Validate package name to prevent command injection
-        if not package_name.replace('-', '').replace('_', '').isalnum():
+        if not package_name.replace("-", "").replace("_", "").isalnum():
             raise SliverCommandError(f"Invalid package name: {package_name}")
 
         try:
-            output = await self._run_sliver_client_command(f"armory remove {package_name}")
+            output = await self._run_sliver_client_command(
+                f"armory remove {package_name}"
+            )
             logger.info(f"Armory uninstall output: {output}")
 
             # Invalidate cache after uninstall
@@ -1060,7 +1433,7 @@ class SliverManager:
                 "success": True,
                 "package": package_name,
                 "message": f"Successfully uninstalled {package_name}",
-                "output": self._strip_ansi(output)
+                "output": self._strip_ansi(output),
             }
         except SliverCommandError as e:
             raise SliverCommandError(f"Failed to uninstall {package_name}: {str(e)}")
@@ -1078,7 +1451,10 @@ class SliverManager:
         assemblies_dir = os.path.realpath(settings.assemblies_dir)
         resolved_path = os.path.realpath(assembly_path)
 
-        if not resolved_path.startswith(assemblies_dir + os.sep) and resolved_path != assemblies_dir:
+        if (
+            not resolved_path.startswith(assemblies_dir + os.sep)
+            and resolved_path != assemblies_dir
+        ):
             raise SliverCommandError(
                 f"Access denied: assembly path must be within {assemblies_dir}"
             )
@@ -1086,23 +1462,26 @@ class SliverManager:
         return resolved_path
 
     async def session_execute_assembly(
-        self, session_id: str, assembly_path: str, arguments: str = "", timeout: int = 300
+        self,
+        session_id: str,
+        assembly_path: str,
+        arguments: str = "",
+        timeout: int = 300,
     ) -> dict:
         """Execute .NET assembly on session"""
         try:
             session = await self._client.interact_session(session_id)
             # Validate and resolve assembly path (path traversal protection)
             safe_path = self._validate_assembly_path(assembly_path)
-            with open(safe_path, 'rb') as f:
+            with open(safe_path, "rb") as f:
                 assembly_data = f.read()
 
             result = await asyncio.wait_for(
-                session.execute_assembly(assembly_data, arguments),
-                timeout=timeout
+                session.execute_assembly(assembly_data, arguments), timeout=timeout
             )
             return {
-                "output": result.Output.decode() if hasattr(result, 'Output') else "",
-                "error": result.Error if hasattr(result, 'Error') else "",
+                "output": result.Output.decode() if hasattr(result, "Output") else "",
+                "error": result.Error if hasattr(result, "Error") else "",
             }
         except asyncio.TimeoutError:
             raise SliverCommandError(f"Execute-assembly timed out after {timeout}s")
@@ -1121,7 +1500,7 @@ class SliverManager:
             beacon = await self._client.interact_beacon(beacon_id)
             # Validate and resolve assembly path (path traversal protection)
             safe_path = self._validate_assembly_path(assembly_path)
-            with open(safe_path, 'rb') as f:
+            with open(safe_path, "rb") as f:
                 assembly_data = f.read()
 
             task = await beacon.execute_assembly(assembly_data, arguments)
@@ -1148,7 +1527,9 @@ class SliverManager:
 
         sessions = await self.get_sessions()
         stale = []
-        threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=threshold_minutes)
+        threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+            minutes=threshold_minutes
+        )
 
         for session in sessions:
             last_checkin = session.get("last_checkin")
@@ -1156,12 +1537,20 @@ class SliverManager:
                 try:
                     # Parse timestamp (handle various formats)
                     if isinstance(last_checkin, str):
-                        checkin_time = datetime.fromisoformat(last_checkin.replace('Z', '+00:00'))
+                        checkin_time = datetime.fromisoformat(
+                            last_checkin.replace("Z", "+00:00")
+                        )
                     else:
                         checkin_time = datetime.fromtimestamp(last_checkin)
 
                     if checkin_time.replace(tzinfo=None) < threshold:
-                        session["stale_minutes"] = int((datetime.now(timezone.utc).replace(tzinfo=None) - checkin_time.replace(tzinfo=None)).total_seconds() / 60)
+                        session["stale_minutes"] = int(
+                            (
+                                datetime.now(timezone.utc).replace(tzinfo=None)
+                                - checkin_time.replace(tzinfo=None)
+                            ).total_seconds()
+                            / 60
+                        )
                         stale.append(session)
                 except Exception:
                     pass
@@ -1182,11 +1571,16 @@ class SliverManager:
             if last_checkin:
                 try:
                     if isinstance(last_checkin, str):
-                        checkin_time = datetime.fromisoformat(last_checkin.replace('Z', '+00:00'))
+                        checkin_time = datetime.fromisoformat(
+                            last_checkin.replace("Z", "+00:00")
+                        )
                     else:
                         checkin_time = datetime.fromtimestamp(last_checkin)
 
-                    seconds_since = (datetime.now(timezone.utc).replace(tzinfo=None) - checkin_time.replace(tzinfo=None)).total_seconds()
+                    seconds_since = (
+                        datetime.now(timezone.utc).replace(tzinfo=None)
+                        - checkin_time.replace(tzinfo=None)
+                    ).total_seconds()
                     expected_checkins = seconds_since / interval
 
                     if expected_checkins >= missed_checkins:

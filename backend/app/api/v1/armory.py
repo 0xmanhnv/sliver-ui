@@ -19,6 +19,7 @@ router = APIRouter()
 # Schemas
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class ArmoryPackage(BaseModel):
     name: str
     command_name: str
@@ -57,6 +58,7 @@ class GitHubTokenStatus(BaseModel):
 # Endpoints
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.get("", response_model=ArmoryListResponse)
 async def list_armory_packages(
     installed_only: bool = False,
@@ -75,8 +77,10 @@ async def list_armory_packages(
     if search:
         search_lower = search.lower()
         packages = [
-            p for p in packages
-            if search_lower in p["name"].lower() or search_lower in p.get("command_name", "").lower()
+            p
+            for p in packages
+            if search_lower in p["name"].lower()
+            or search_lower in p.get("command_name", "").lower()
         ]
 
     installed_count = sum(1 for p in packages if p["installed"])
@@ -142,16 +146,15 @@ async def set_github_token(
     token = request.token.strip()
     if not token:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token cannot be empty"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Token cannot be empty"
         )
 
     # Set in settings (runtime only - not persisted)
     # We need to modify the settings object directly since it's cached
-    object.__setattr__(settings, 'github_token', token)
+    object.__setattr__(settings, "github_token", token)
 
     # Also set in environment for subprocess calls
-    os.environ['GITHUB_TOKEN'] = token
+    os.environ["GITHUB_TOKEN"] = token
 
     preview = f"{token[:4]}...{'*' * 4}"
     return GitHubTokenStatus(configured=True, token_preview=preview)
@@ -162,7 +165,7 @@ async def remove_github_token(
     current_user=Depends(require_role("admin")),
 ):
     """Remove GitHub token"""
-    object.__setattr__(settings, 'github_token', None)
-    if 'GITHUB_TOKEN' in os.environ:
-        del os.environ['GITHUB_TOKEN']
+    object.__setattr__(settings, "github_token", None)
+    if "GITHUB_TOKEN" in os.environ:
+        del os.environ["GITHUB_TOKEN"]
     return {"success": True, "message": "GitHub token removed"}

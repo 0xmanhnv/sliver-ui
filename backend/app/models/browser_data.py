@@ -58,5 +58,7 @@ class BrowserCookie(Base):
             "secure": self.secure,
             "http_only": self.http_only,
             "same_site": self.same_site,
-            "extracted_at": self.extracted_at.isoformat() if self.extracted_at else None,
+            "extracted_at": (
+                self.extracted_at.isoformat() if self.extracted_at else None
+            ),
         }

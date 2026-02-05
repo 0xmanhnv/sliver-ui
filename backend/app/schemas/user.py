@@ -31,7 +31,9 @@ class UserCreate(UserBase):
     """Create user schema"""
 
     password: str = Field(..., min_length=8, max_length=100)
-    role_id: int = Field(default=2, description="Role ID (1=admin, 2=operator, 3=viewer)")
+    role_id: int = Field(
+        default=2, description="Role ID (1=admin, 2=operator, 3=viewer)"
+    )
 
 
 class UserUpdate(BaseModel):

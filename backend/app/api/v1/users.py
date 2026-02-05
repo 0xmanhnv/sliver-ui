@@ -13,7 +13,13 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import get_admin_user, get_db
 from app.core.security import get_password_hash
 from app.models import User, Role, AuditLog
-from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserList, RoleResponse
+from app.schemas.user import (
+    UserCreate,
+    UserUpdate,
+    UserResponse,
+    UserList,
+    RoleResponse,
+)
 from app.schemas.common import MessageResponse
 
 logger = logging.getLogger(__name__)
@@ -29,9 +35,7 @@ async def list_users(
     """
     List all users (Admin only)
     """
-    result = await db.execute(
-        select(User).options(selectinload(User.role))
-    )
+    result = await db.execute(select(User).options(selectinload(User.role)))
     users = result.scalars().all()
 
     return UserList(
@@ -64,9 +68,7 @@ async def create_user(
     Create new user (Admin only)
     """
     # Check if username exists
-    result = await db.execute(
-        select(User).where(User.username == user_data.username)
-    )
+    result = await db.execute(select(User).where(User.username == user_data.username))
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -75,9 +77,7 @@ async def create_user(
 
     # Check if email exists
     if user_data.email:
-        result = await db.execute(
-            select(User).where(User.email == user_data.email)
-        )
+        result = await db.execute(select(User).where(User.email == user_data.email))
         if result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -119,9 +119,7 @@ async def create_user(
 
     # Reload with role
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == new_user.id)
+        select(User).options(selectinload(User.role)).where(User.id == new_user.id)
     )
     new_user = result.scalar_one()
 
@@ -139,9 +137,7 @@ async def get_user(
     Get user by ID (Admin only)
     """
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == user_id)
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
     )
     user = result.scalar_one_or_none()
 
@@ -166,9 +162,7 @@ async def update_user(
     Update user (Admin only)
     """
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == user_id)
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
     )
     user = result.scalar_one_or_none()
 
@@ -221,9 +215,7 @@ async def update_user(
         user.password_hash = get_password_hash(update_data["password"])
 
     if "role_id" in update_data:
-        result = await db.execute(
-            select(Role).where(Role.id == update_data["role_id"])
-        )
+        result = await db.execute(select(Role).where(Role.id == update_data["role_id"]))
         if not result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -249,9 +241,7 @@ async def update_user(
 
     # Reload
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == user_id)
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
     )
     user = result.scalar_one()
 
