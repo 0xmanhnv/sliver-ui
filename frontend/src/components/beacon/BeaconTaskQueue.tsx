@@ -41,12 +41,12 @@ interface BeaconTask {
 
 interface BeaconTaskQueueProps {
   beaconId: string
-  _beaconName?: string
+  beaconName?: string
 }
 
 type TaskType = 'shell' | 'download' | 'ps' | 'screenshot'
 
-export function BeaconTaskQueue({ beaconId, _beaconName }: BeaconTaskQueueProps) {
+export function BeaconTaskQueue({ beaconId, beaconName: _beaconName }: BeaconTaskQueueProps) {
   const [showNewTask, setShowNewTask] = useState(false)
   const [taskType, setTaskType] = useState<TaskType>('shell')
   const [command, setCommand] = useState('')
