@@ -1,0 +1,56 @@
+# Development environment with hot reload
+services:
+  # FastAPI Backend with hot reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - DATABASE_URL=sqlite:////app/data/sliverui.db
+      - REDIS_URL=redis://redis:6379/0
+      - SLIVER_CONFIG=/app/config/operator.cfg
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRE_MINUTES=60
+    volumes:
+      - ./backend:/app
+      - ./data/sqlite:/app/data
+      - ./config:/app/config:ro
+    depends_on:
+      - redis
+    networks:
+      - sliverui-dev
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend with Vite dev server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - sliverui-dev
+    command: npm run dev -- --host 0.0.0.0
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - sliverui-dev
+
+networks:
+  sliverui-dev:
+    driver: bridge

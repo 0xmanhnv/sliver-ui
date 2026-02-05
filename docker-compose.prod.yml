@@ -1,0 +1,45 @@
+# SliverUI Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up -d
+#
+# Requirements:
+# - Backend uses network_mode: host to access WireGuard/VPN networks
+# - Frontend static files served directly by nginx (no frontend container)
+# - Build frontend first: ./scripts/build-frontend.sh
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sliverui-backend
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - DATABASE_URL=sqlite:///./data/sliverui.db
+      - SLIVER_CONFIG=${SLIVER_CONFIG:-/app/data/operator.cfg}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: sliverui-nginx
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/ssl:ro
+      - ./static:/usr/share/nginx/html:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy

@@ -1,0 +1,65 @@
+# SliverUI .gitignore
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Data directories
+data/
+logs/
+backups/
+
+# Config files with secrets
+config/operator.cfg
+config/*.cfg
+
+# SSL certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm/
+
+# Build outputs
+frontend/dist/
+backend/*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Alembic
+alembic/versions/*.pyc
