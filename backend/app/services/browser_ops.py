@@ -12,10 +12,9 @@ Orchestrates SliverManager primitives for browser session hijacking workflows:
 import io
 import json
 import logging
-import os
 import re
 import zipfile
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
@@ -848,7 +847,7 @@ class BrowserOpsService:
             return {
                 "injected": 0,
                 "failed": len(cookies),
-                "errors": [f"No webSocketDebuggerUrl in CDP response"],
+                "errors": ["No webSocketDebuggerUrl in CDP response"],
             }
 
         try:

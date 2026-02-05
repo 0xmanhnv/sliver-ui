@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.security import verify_token
-from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.services.database import get_db
 from app.services.sliver_client import sliver_manager, SliverManager
 from app.models import User
@@ -55,7 +54,7 @@ async def get_current_user(
         )
 
     # Get user from database with role and permissions eager-loaded
-    from app.models import Role, Permission
+    from app.models import Role
     result = await db.execute(
         select(User)
         .options(

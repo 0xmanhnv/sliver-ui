@@ -3,9 +3,9 @@ Beacon management endpoints
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_sliver, require_permission, get_db
@@ -292,8 +292,6 @@ async def get_task_result(
 # ═══════════════════════════════════════════════════════════════════════════
 # Execute-Assembly Operations
 # ═══════════════════════════════════════════════════════════════════════════
-
-from pydantic import BaseModel
 
 class ExecuteAssemblyRequest(BaseModel):
     assembly_path: str

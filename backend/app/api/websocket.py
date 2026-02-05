@@ -5,7 +5,7 @@ WebSocket endpoint for real-time updates
 import asyncio
 import json
 import logging
-from typing import Set, Dict, Any
+from typing import Dict, Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.core.security import verify_token

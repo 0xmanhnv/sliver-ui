@@ -102,5 +102,4 @@ class User(Base, TimestampMixin):
         return self.role and self.role.name == "admin"
 
 
-# Import AuditLog here to avoid circular import
-from .audit import AuditLog
+from .audit import AuditLog  # noqa: E402  # circular import avoidance

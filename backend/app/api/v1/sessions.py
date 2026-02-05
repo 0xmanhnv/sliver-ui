@@ -4,14 +4,13 @@ Session management endpoints
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 import io
 
-from app.api.deps import get_sliver, require_permission, get_db, get_current_user
+from app.api.deps import get_sliver, require_permission, get_db
 from app.services.sliver_client import SliverManager
 from app.models import User, AuditLog
 from app.schemas.session import (
@@ -621,8 +620,6 @@ async def take_screenshot(
 # ═══════════════════════════════════════════════════════════════════════════
 # Execute-Assembly Operations
 # ═══════════════════════════════════════════════════════════════════════════
-
-from pydantic import BaseModel
 
 class ExecuteAssemblyRequest(BaseModel):
     assembly_path: str

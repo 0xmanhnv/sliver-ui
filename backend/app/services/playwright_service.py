@@ -5,12 +5,11 @@ Manages headless browser sessions for session replay/hijacking.
 Runs headless Chromium inside the Docker container with injected cookies.
 """
 
-import asyncio
 import base64
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)

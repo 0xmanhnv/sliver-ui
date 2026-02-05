@@ -72,7 +72,7 @@ class SliverManager:
 
                 self._config_path = config_path
                 self._connected = True
-                logger.info(f"Connected to Sliver server")
+                logger.info("Connected to Sliver server")
 
             except Exception as e:
                 self._client = None

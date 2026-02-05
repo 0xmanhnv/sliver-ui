@@ -5,7 +5,7 @@ User schemas
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class RoleResponse(BaseModel):

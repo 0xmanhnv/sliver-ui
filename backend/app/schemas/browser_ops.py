@@ -2,7 +2,6 @@
 Browser operations schemas for cookie extraction, proxy, and CDP debugging
 """
 
-from datetime import datetime
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
