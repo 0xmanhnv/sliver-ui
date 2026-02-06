@@ -1,25 +1,23 @@
 # =============================================================================
-# SliverUI Docker Compose -- Pull from Docker Hub
+# SliverUI Docker Compose -- Pull Pre-built Image
 # =============================================================================
-# Deploys SliverUI using a pre-built unified image from Docker Hub.
+# Deploys SliverUI using a pre-built unified image from GHCR.
 # No source code or local build required.
 #
 # Usage:
-#   1. Copy this file + .env.example to your server
-#   2. Create .env and set SECRET_KEY + ADMIN_PASSWORD
-#   3. Place SSL certs in ./certs/ (cert.pem, key.pem)
-#   4. Place nginx config in ./nginx/nginx.conf
-#   5. Place Sliver operator config in ./config/operator.cfg
-#   6. Start: docker compose -f docker-compose.hub.yml up -d
+#   1. Download: docker-compose.hub.yml, nginx.conf
+#   2. Create .env (see below)
+#   3. Place SSL certs in ./certs/ and operator config in ./config/
+#   4. Start: docker compose -f docker-compose.hub.yml up -d
 #
 # Version pinning:
-#   Set SLIVERUI_VERSION=1.0.0 in .env to pin to a specific release.
-#   Default: latest
+#   SLIVERUI_VERSION=1.0.0  → specific release
+#   SLIVERUI_VERSION=latest → latest build (default)
 # =============================================================================
 
 services:
   sliver-ui:
-    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/sliver-ui:${SLIVERUI_VERSION:-latest}
+    image: ghcr.io/0xmanhnv/sliver-ui:${SLIVERUI_VERSION:-latest}
     container_name: sliver-ui
     network_mode: host
     restart: unless-stopped

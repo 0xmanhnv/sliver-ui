@@ -201,12 +201,13 @@ jobs:
           cat >> release_notes.md << 'MIDDLE'
           ```
 
-          Or deploy with docker-compose:
+          Or deploy with docker-compose (no source code needed):
 
           ```bash
           MIDDLE
 
-          echo "SLIVERUI_VERSION=${VERSION} docker compose -f docker-compose.hub.yml up -d" >> release_notes.md
+          echo "# Set SLIVERUI_VERSION=${VERSION} in .env, then:" >> release_notes.md
+          echo "docker compose -f docker-compose.hub.yml up -d" >> release_notes.md
 
           cat >> release_notes.md << 'FOOTER'
           ```

@@ -124,28 +124,193 @@ Open `https://<your-ip>` in a browser and log in with the credentials from `.env
 
 ---
 
-## Quick Start (Docker Hub - No Build)
+## Quick Start (Pre-built Image - No Build Required)
 
-Use `docker-compose.hub.yml` to deploy from a pre-built image without needing the source code.
+Deploy SliverUI from the pre-built image on [GHCR](https://ghcr.io/0xmanhnv/sliver-ui). No source code or local build needed — only 3 files required on the server.
+
+### Step 1 - Download files
 
 ```bash
-# 1. Copy these files to your server:
-#    docker-compose.hub.yml, .env.example, nginx/nginx.conf
+mkdir -p sliverui && cd sliverui
 
-# 2. Create .env
-cp .env.example .env
-# Set: SECRET_KEY, ADMIN_PASSWORD, DOCKERHUB_USERNAME
+# Download the 2 required files from the repo
+curl -LO https://raw.githubusercontent.com/0xmanhnv/sliver-ui/main/docker-compose.hub.yml
+mkdir -p nginx
+curl -L https://raw.githubusercontent.com/0xmanhnv/sliver-ui/main/nginx/nginx.conf -o nginx/nginx.conf
+```
 
-# 3. Create directories
+### Step 2 - Create directories and `.env`
+
+```bash
 mkdir -p data logs logs/nginx config certs
 
-# 4. Place operator config and SSL certs
-cp /path/to/operator.cfg config/
-cp /path/to/cert.pem certs/
-cp /path/to/key.pem  certs/
+cat > .env << 'EOF'
+SECRET_KEY=<paste-output-of-openssl-rand-hex-32>
+ADMIN_PASSWORD=<strong-password>
+ADMIN_USERNAME=admin
+# Pin to a specific version (optional):
+# SLIVERUI_VERSION=1.0.0
+EOF
+```
 
-# 5. Start
+Generate a random secret key:
+
+```bash
+openssl rand -hex 32
+```
+
+### Step 3 - Sliver operator config + SSL certs
+
+```bash
+# Operator config (from Sliver server)
+cp /path/to/sliverui.cfg config/operator.cfg
+
+# SSL certificates
+# Option A: Self-signed (for testing)
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout certs/key.pem -out certs/cert.pem \
+  -subj "/CN=localhost"
+
+# Option B: Let's Encrypt (production)
+# certbot certonly --standalone -d your-domain.com
+# cp /etc/letsencrypt/live/your-domain.com/fullchain.pem certs/cert.pem
+# cp /etc/letsencrypt/live/your-domain.com/privkey.pem   certs/key.pem
+```
+
+### Step 4 - Start
+
+```bash
 docker compose -f docker-compose.hub.yml up -d
+```
+
+### Step 5 - Verify
+
+```bash
+# Health check
+curl -f http://localhost:8000/health
+
+# Open in browser
+# https://<your-server-ip>
+```
+
+### Update to a new version
+
+```bash
+# Pull latest image and restart
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+
+# Or pin a specific version in .env:
+# SLIVERUI_VERSION=1.2.0
+```
+
+### Directory layout on the server
+
+```
+sliverui/
+├── docker-compose.hub.yml
+├── .env
+├── nginx/
+│   └── nginx.conf
+├── config/
+│   └── operator.cfg
+├── certs/
+│   ├── cert.pem
+│   └── key.pem
+├── data/          # auto-created, contains sliverui.db
+└── logs/          # auto-created
+```
+
+---
+
+## Quick Start (Docker Run - No Compose)
+
+Run SliverUI with plain `docker run` commands. No docker-compose needed.
+
+### Step 1 - Prepare
+
+```bash
+mkdir -p sliverui/{data,logs,logs/nginx,config,certs,nginx} && cd sliverui
+
+# Create .env (used by the commands below)
+cat > .env << 'EOF'
+SECRET_KEY=<paste-output-of-openssl-rand-hex-32>
+ADMIN_PASSWORD=<strong-password>
+EOF
+
+# Place operator config + SSL certs
+cp /path/to/sliverui.cfg config/operator.cfg
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout certs/key.pem -out certs/cert.pem -subj "/CN=localhost"
+```
+
+### Step 2 - Download nginx config
+
+```bash
+curl -L https://raw.githubusercontent.com/0xmanhnv/sliver-ui/main/nginx/nginx.conf \
+  -o nginx/nginx.conf
+```
+
+### Step 3 - Run SliverUI
+
+```bash
+source .env
+
+docker run -d \
+  --name sliver-ui \
+  --network host \
+  --restart unless-stopped \
+  -e APP_ENV=production \
+  -e SECRET_KEY="$SECRET_KEY" \
+  -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  -e ADMIN_USERNAME=admin \
+  -e DATABASE_URL=sqlite:///./data/sliverui.db \
+  -e SLIVER_CONFIG=/app/config/operator.cfg \
+  -e LOG_LEVEL=INFO \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/logs:/app/logs" \
+  -v "$(pwd)/config:/app/config:ro" \
+  ghcr.io/0xmanhnv/sliver-ui:latest
+```
+
+### Step 4 - Run Nginx (TLS termination)
+
+```bash
+docker run -d \
+  --name sliverui-nginx \
+  --network host \
+  --restart unless-stopped \
+  -v "$(pwd)/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+  -v "$(pwd)/certs:/etc/nginx/ssl:ro" \
+  -v "$(pwd)/logs/nginx:/var/log/nginx" \
+  nginx:alpine
+```
+
+### Step 5 - Verify
+
+```bash
+curl -f http://localhost:8000/health
+# Open https://<your-server-ip> in browser
+```
+
+### Useful commands
+
+```bash
+# View logs
+docker logs -f sliver-ui
+docker logs -f sliverui-nginx
+
+# Restart
+docker restart sliver-ui sliverui-nginx
+
+# Stop and remove
+docker stop sliver-ui sliverui-nginx
+docker rm sliver-ui sliverui-nginx
+
+# Update to new version
+docker pull ghcr.io/0xmanhnv/sliver-ui:latest
+docker stop sliver-ui && docker rm sliver-ui
+# Re-run the "docker run" command from Step 3
 ```
 
 ---
