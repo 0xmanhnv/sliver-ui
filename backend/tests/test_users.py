@@ -14,6 +14,7 @@ USERS_PREFIX = "/api/v1/users"
 # List users
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_list_users_as_admin(async_client, admin_headers):
     """Admin can list users; at least the seeded admin is present."""
@@ -35,6 +36,7 @@ async def test_list_users_unauthenticated(async_client):
 # ---------------------------------------------------------------------------
 # Create user
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_create_user(async_client, admin_headers):
@@ -75,6 +77,7 @@ async def test_create_duplicate_username(async_client, admin_headers):
 # Get user by ID
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_get_user_by_id(async_client, admin_headers):
     """Admin can fetch a user by ID."""
@@ -98,6 +101,7 @@ async def test_get_user_by_id(async_client, admin_headers):
 # ---------------------------------------------------------------------------
 # Update user
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_update_user(async_client, admin_headers):
@@ -126,6 +130,7 @@ async def test_update_user(async_client, admin_headers):
 # Delete user
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_delete_user(async_client, admin_headers):
     """Admin can delete another user."""
@@ -140,9 +145,7 @@ async def test_delete_user(async_client, admin_headers):
     )
     user_id = create_resp.json()["id"]
 
-    resp = await async_client.delete(
-        f"{USERS_PREFIX}/{user_id}", headers=admin_headers
-    )
+    resp = await async_client.delete(f"{USERS_PREFIX}/{user_id}", headers=admin_headers)
     assert resp.status_code == 200
     assert "deleted" in resp.json()["message"].lower()
 

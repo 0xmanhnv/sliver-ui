@@ -1,6 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
+
+function resolveTheme(theme: Theme): 'dark' | 'light' {
+  if (theme === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return theme
+}
+
+function applyToDOM(effective: 'dark' | 'light') {
+  const root = window.document.documentElement
+  root.classList.remove('light', 'dark')
+  root.classList.add(effective)
+}
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -8,31 +21,17 @@ export function useTheme() {
     return (localStorage.getItem('theme') as Theme) || 'dark'
   })
 
-  const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light'>('dark')
+  // Derive resolved theme synchronously (no effect needed)
+  const resolvedTheme = useMemo(() => resolveTheme(theme), [theme])
 
-  // Apply theme to document
-  const applyTheme = useCallback((newTheme: Theme) => {
-    const root = window.document.documentElement
-
-    let effectiveTheme: 'dark' | 'light'
-
-    if (newTheme === 'system') {
-      effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    } else {
-      effectiveTheme = newTheme
-    }
-
-    root.classList.remove('light', 'dark')
-    root.classList.add(effectiveTheme)
-    setResolvedTheme(effectiveTheme)
-  }, [])
+  // Apply to DOM whenever resolvedTheme changes
+  applyToDOM(resolvedTheme)
 
   // Set theme
   const setTheme = useCallback((newTheme: Theme) => {
     localStorage.setItem('theme', newTheme)
     setThemeState(newTheme)
-    applyTheme(newTheme)
-  }, [applyTheme])
+  }, [])
 
   // Toggle between light and dark
   const toggleTheme = useCallback(() => {
@@ -40,25 +39,20 @@ export function useTheme() {
     setTheme(newTheme)
   }, [resolvedTheme, setTheme])
 
-  // Initialize theme on mount
-  useEffect(() => {
-    applyTheme(theme)
-  }, [applyTheme, theme])
-
   // Listen for system theme changes
   useEffect(() => {
     if (theme !== 'system') return
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    const handler = (e: MediaQueryListEvent) => {
-      setResolvedTheme(e.matches ? 'dark' : 'light')
-      applyTheme('system')
+    const handler = () => {
+      // Re-trigger render so useMemo recalculates
+      setThemeState('system')
     }
 
     mediaQuery.addEventListener('change', handler)
     return () => mediaQuery.removeEventListener('change', handler)
-  }, [theme, applyTheme])
+  }, [theme])
 
   return {
     theme,

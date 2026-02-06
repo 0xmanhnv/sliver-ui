@@ -15,10 +15,10 @@ from app.models import Base
 from app.services.database import get_db, seed_data
 from app.services.sliver_client import SliverManager
 
-
 # ---------------------------------------------------------------------------
 # Database fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session")
 def anyio_backend():
@@ -64,6 +64,7 @@ async def test_db(test_session_maker):
 # Seed data
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 async def seed_test_data(test_session_maker):
     """Run seed_data() to create roles, permissions, and the admin user."""
@@ -74,6 +75,7 @@ async def seed_test_data(test_session_maker):
 # ---------------------------------------------------------------------------
 # FastAPI app with overridden DB dependency
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 async def test_app(test_session_maker, seed_test_data):
@@ -96,7 +98,9 @@ async def test_app(test_session_maker, seed_test_data):
     # Mock sliver_manager.is_connected so health check doesn't need a real server.
     # Raise rate limits so tests aren't throttled.
     with (
-        patch.object(SliverManager, "is_connected", new_callable=PropertyMock, return_value=False),
+        patch.object(
+            SliverManager, "is_connected", new_callable=PropertyMock, return_value=False
+        ),
         patch("app.middleware.rate_limit.RATE_LIMITS", {}),
         patch("app.middleware.rate_limit.DEFAULT_RATE_LIMIT", (10000, 60)),
     ):
@@ -109,6 +113,7 @@ async def test_app(test_session_maker, seed_test_data):
 # HTTP client
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 async def async_client(test_app):
     """httpx AsyncClient bound to the test app."""
@@ -120,6 +125,7 @@ async def async_client(test_app):
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 async def admin_token(seed_test_data, test_session_maker):

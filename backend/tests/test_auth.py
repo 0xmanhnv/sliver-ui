@@ -13,6 +13,7 @@ AUTH_PREFIX = "/api/v1/auth"
 # Login
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_login_success(async_client):
     """Valid admin creds return access & refresh tokens."""
@@ -68,6 +69,7 @@ async def test_login_short_password_validation(async_client):
 # Token refresh
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_refresh_token_success(async_client):
     """Valid refresh token returns a new token pair."""
@@ -105,6 +107,7 @@ async def test_refresh_token_invalid(async_client):
 # /auth/me
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_me_authenticated(async_client, admin_headers):
     """GET /auth/me with valid token returns user info."""
@@ -128,6 +131,7 @@ async def test_me_unauthenticated(async_client):
 # Logout
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_logout_success(async_client, admin_headers):
     """POST /auth/logout with valid token returns success."""
@@ -139,6 +143,7 @@ async def test_logout_success(async_client, admin_headers):
 # ---------------------------------------------------------------------------
 # Account lockout
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_account_lockout_after_failed_attempts(async_client):

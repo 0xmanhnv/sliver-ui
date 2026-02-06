@@ -33,6 +33,34 @@ interface ProcessListProps {
 type SortField = 'pid' | 'executable' | 'owner'
 type SortDirection = 'asc' | 'desc'
 
+function SortHeader({
+  field,
+  children,
+  sortField,
+  sortDirection,
+  onSort,
+}: {
+  field: SortField
+  children: React.ReactNode
+  sortField: SortField
+  sortDirection: SortDirection
+  onSort: (field: SortField) => void
+}) {
+  return (
+    <th
+      className="p-2 font-medium cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field && (
+          <ArrowUpDown className={cn('h-3 w-3', sortDirection === 'desc' && 'rotate-180')} />
+        )}
+      </div>
+    </th>
+  )
+}
+
 export function ProcessList({ sessionId, sessionPid }: ProcessListProps) {
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState<SortField>('pid')
@@ -102,20 +130,6 @@ export function ProcessList({ sessionId, sessionPid }: ProcessListProps) {
   // Get process tree (simple)
   const getChildren = (pid: number) => processes.filter((p) => p.ppid === pid)
 
-  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-    <th
-      className="p-2 font-medium cursor-pointer hover:bg-muted/50 select-none"
-      onClick={() => handleSort(field)}
-    >
-      <div className="flex items-center gap-1">
-        {children}
-        {sortField === field && (
-          <ArrowUpDown className={cn('h-3 w-3', sortDirection === 'desc' && 'rotate-180')} />
-        )}
-      </div>
-    </th>
-  )
-
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
@@ -168,14 +182,14 @@ export function ProcessList({ sessionId, sessionPid }: ProcessListProps) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 sticky top-0">
               <tr className="text-left">
-                <SortHeader field="pid">
+                <SortHeader field="pid" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                   <Hash className="h-3 w-3" /> PID
                 </SortHeader>
                 <th className="p-2 font-medium">PPID</th>
-                <SortHeader field="executable">
+                <SortHeader field="executable" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                   <Cpu className="h-3 w-3" /> Process
                 </SortHeader>
-                <SortHeader field="owner">
+                <SortHeader field="owner" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                   <User className="h-3 w-3" /> Owner
                 </SortHeader>
                 <th className="p-2 font-medium">Arch</th>

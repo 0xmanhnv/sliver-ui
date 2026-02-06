@@ -174,6 +174,7 @@ if os.path.isdir(STATIC_DIR):
         if full_path and os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
 else:
     # Dev mode: no static dir, simple root endpoint
     @app.get("/")

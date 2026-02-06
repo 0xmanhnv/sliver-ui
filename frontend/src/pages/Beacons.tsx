@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { beaconsApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
@@ -74,12 +74,14 @@ export function Beacons() {
     return '💻'
   }
 
+  // Snapshot current time once per data fetch (avoids impure Date.now() during render)
+  const now = data ? Date.now() : 0
+
   // Calculate time since last check-in
-  const getCheckInStatus = (lastCheckin: string | null, interval: number) => {
+  const getCheckInStatus = useCallback((lastCheckin: string | null, interval: number) => {
     if (!lastCheckin) return { status: 'pending', color: 'bg-yellow-500' }
 
     const lastTime = new Date(lastCheckin).getTime()
-    const now = Date.now()
     const diff = (now - lastTime) / 1000 // seconds
 
     if (diff < interval * 1.5) {
@@ -89,7 +91,7 @@ export function Beacons() {
     } else {
       return { status: 'missed', color: 'bg-red-500' }
     }
-  }
+  }, [now])
 
   return (
     <div className="h-full flex flex-col">

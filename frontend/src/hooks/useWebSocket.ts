@@ -48,6 +48,66 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     return `${protocol}//${host}/ws?token=${token}`
   }, [])
 
+  const handleMessageRef = useRef<(event: MessageEvent) => void>(() => {})
+
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return
+    }
+
+    // Token is stored in zustand persist storage as 'sliverui-auth'
+    let token = null
+    try {
+      const authData = localStorage.getItem('sliverui-auth')
+      if (authData) {
+        const parsed = JSON.parse(authData)
+        token = parsed.state?.accessToken || null
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    if (!token) {
+      console.log('No token available for WebSocket connection')
+      return
+    }
+
+    try {
+      const ws = new WebSocket(getWebSocketUrl())
+
+      ws.onopen = () => {
+        console.log('WebSocket connected')
+        setIsConnected(true)
+        reconnectCountRef.current = 0
+      }
+
+      ws.onmessage = (ev) => handleMessageRef.current(ev)
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+      }
+
+      ws.onclose = (event) => {
+        console.log('WebSocket closed:', event.code, event.reason)
+        setIsConnected(false)
+        wsRef.current = null
+
+        // Attempt reconnection if not intentionally closed
+        if (event.code !== 1000 && reconnectCountRef.current < reconnectAttempts) {
+          reconnectCountRef.current++
+          console.log(`Attempting reconnection ${reconnectCountRef.current}/${reconnectAttempts}`)
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect()
+          }, reconnectInterval)
+        }
+      }
+
+      wsRef.current = ws
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error)
+    }
+  }, [getWebSocketUrl, reconnectAttempts, reconnectInterval])
+
   const handleMessage = useCallback((event: MessageEvent) => {
     const addNotification = useNotificationStore.getState().addNotification
 
@@ -160,63 +220,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     }
   }, [queryClient, toast])
 
-  const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return
-    }
-
-    // Token is stored in zustand persist storage as 'sliverui-auth'
-    let token = null
-    try {
-      const authData = localStorage.getItem('sliverui-auth')
-      if (authData) {
-        const parsed = JSON.parse(authData)
-        token = parsed.state?.accessToken || null
-      }
-    } catch {
-      // Ignore parse errors
-    }
-    if (!token) {
-      console.log('No token available for WebSocket connection')
-      return
-    }
-
-    try {
-      const ws = new WebSocket(getWebSocketUrl())
-
-      ws.onopen = () => {
-        console.log('WebSocket connected')
-        setIsConnected(true)
-        reconnectCountRef.current = 0
-      }
-
-      ws.onmessage = handleMessage
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
-      }
-
-      ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason)
-        setIsConnected(false)
-        wsRef.current = null
-
-        // Attempt reconnection if not intentionally closed
-        if (event.code !== 1000 && reconnectCountRef.current < reconnectAttempts) {
-          reconnectCountRef.current++
-          console.log(`Attempting reconnection ${reconnectCountRef.current}/${reconnectAttempts}`)
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect()
-          }, reconnectInterval)
-        }
-      }
-
-      wsRef.current = ws
-    } catch (error) {
-      console.error('Failed to create WebSocket:', error)
-    }
-  }, [getWebSocketUrl, handleMessage, reconnectAttempts, reconnectInterval])
+  // Keep ref in sync so WebSocket onmessage always calls latest handler
+  handleMessageRef.current = handleMessage
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
