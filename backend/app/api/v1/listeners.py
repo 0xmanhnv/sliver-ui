@@ -91,6 +91,7 @@ async def start_mtls_listener(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ListenerResponse(
         id=job["id"],
@@ -136,6 +137,7 @@ async def start_https_listener(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ListenerResponse(
         id=job["id"],
@@ -179,6 +181,7 @@ async def start_http_listener(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ListenerResponse(
         id=job["id"],
@@ -222,6 +225,7 @@ async def start_dns_listener(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ListenerResponse(
         id=job["id"],
@@ -255,5 +259,6 @@ async def stop_listener(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Listener {job_id} stopped")

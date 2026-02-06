@@ -91,6 +91,7 @@ async def kill_session(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Session {session_id} killed")
 
@@ -133,6 +134,7 @@ async def execute_shell(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ShellResponse(
         output=result.get("output", ""),
@@ -200,6 +202,7 @@ async def kill_process(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Process {pid} killed")
 
@@ -237,6 +240,13 @@ async def download_file(
     """
     Download file from session
     """
+    # Validate path to prevent path traversal
+    if ".." in path:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Path must not contain '..' components",
+        )
+
     session = await sliver.get_session(session_id)
     if not session:
         raise HTTPException(
@@ -256,6 +266,7 @@ async def download_file(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     # Get filename from path
     filename = path.split("/")[-1].split("\\")[-1]
@@ -326,6 +337,7 @@ async def start_socks_proxy(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -361,6 +373,7 @@ async def stop_socks_proxy(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"SOCKS proxy {tunnel_id} stopped")
 
@@ -412,6 +425,7 @@ async def start_port_forward(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -447,6 +461,7 @@ async def stop_port_forward(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Port forward {tunnel_id} stopped")
 
@@ -475,12 +490,18 @@ async def upload_file(
             detail=f"Session {session_id} not found",
         )
 
-    # Read file data from request body
+    # Read file data from request body with size limit (50MB)
+    MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50MB
     body = await request.body()
     if not body:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No file data provided",
+        )
+    if len(body) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum upload size is {MAX_UPLOAD_SIZE // (1024 * 1024)}MB",
         )
 
     await sliver.session_upload(session_id, remote_path, body)
@@ -495,6 +516,7 @@ async def upload_file(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"File uploaded to {remote_path}")
 
@@ -537,6 +559,7 @@ async def create_directory(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Directory created: {path}")
 
@@ -579,6 +602,7 @@ async def delete_file(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Deleted: {path}")
 
@@ -612,6 +636,7 @@ async def take_screenshot(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return StreamingResponse(
         io.BytesIO(data),
@@ -675,6 +700,7 @@ async def execute_assembly(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ExecuteAssemblyResponse(
         output=result.get("output", ""),

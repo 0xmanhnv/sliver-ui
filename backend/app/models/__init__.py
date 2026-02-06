@@ -5,6 +5,7 @@ from .user import User, Role, Permission, RolePermission
 from .audit import AuditLog
 from .session_data import SessionNote, Tag, SessionTag, CommandHistory
 from .browser_data import BrowserCookie
+from .implant import TrackedImplant
 
 __all__ = [
     "Base",
@@ -18,4 +19,5 @@ __all__ = [
     "SessionTag",
     "CommandHistory",
     "BrowserCookie",
+    "TrackedImplant",
 ]

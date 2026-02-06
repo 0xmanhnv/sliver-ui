@@ -604,11 +604,29 @@ async def get_profile_zip(
     user: User = Depends(require_permission("browser_ops", "read")),
 ):
     """Download browser profile as ZIP archive"""
+    # Validate path components to prevent path traversal
+    if ".." in session_id or "/" in session_id or "\\" in session_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid session_id",
+        )
+    if ".." in browser or "/" in browser or "\\" in browser:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid browser name",
+        )
+
     svc = BrowserOpsService(sliver=None)
 
     from app.services.browser_ops import PROFILE_DATA_DIR
 
     profile_dir = PROFILE_DATA_DIR / session_id / browser
+    # Ensure resolved path stays within PROFILE_DATA_DIR
+    if not str(profile_dir.resolve()).startswith(str(PROFILE_DATA_DIR.resolve())):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid path",
+        )
     if not profile_dir.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

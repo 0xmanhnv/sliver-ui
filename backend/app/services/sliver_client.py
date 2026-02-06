@@ -423,8 +423,8 @@ class SliverManager:
                     }
                     for s in socks
                 ]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error listing SOCKS proxies: {e}")
 
             # Get port forwards
             portfwd_list = []
@@ -441,8 +441,8 @@ class SliverManager:
                     }
                     for p in portfwds
                 ]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Error listing port forwards: {e}")
 
             return socks_list + portfwd_list
         except Exception as e:
@@ -768,8 +768,8 @@ class SliverManager:
             # Clean up rc file
             try:
                 os.unlink(rc_file)
-            except Exception:
-                pass
+            except OSError as e:
+                logger.debug(f"Error cleaning up rc file: {e}")
 
             output = stdout.decode().strip()
             error = stderr.decode().strip()
@@ -786,16 +786,16 @@ class SliverManager:
         except asyncio.TimeoutError:
             try:
                 os.unlink(rc_file)
-            except Exception:
-                pass
+            except OSError as e:
+                logger.debug(f"Error cleaning up rc file: {e}")
             raise SliverCommandError(f"Command timed out after {timeout}s: {command}")
         except SliverCommandError:
             raise
         except Exception as e:
             try:
                 os.unlink(rc_file)
-            except Exception:
-                pass
+            except OSError as e2:
+                logger.debug(f"Error cleaning up rc file: {e2}")
             raise SliverCommandError(f"Failed to run sliver-client: {str(e)}")
 
     async def _get_installed_packages(self) -> set:
@@ -854,8 +854,8 @@ class SliverManager:
                             pkg.get("name", "").lower() in installed
                             or pkg.get("command_name", "").lower() in installed
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Error updating installed status from cache: {e}")
                 return self.__class__._armory_cache
 
         try:
@@ -1552,8 +1552,8 @@ class SliverManager:
                             / 60
                         )
                         stale.append(session)
-                except Exception:
-                    pass
+                except (ValueError, TypeError, OSError) as e:
+                    logger.debug(f"Error parsing session checkin time: {e}")
 
         return stale
 
@@ -1586,8 +1586,8 @@ class SliverManager:
                     if expected_checkins >= missed_checkins:
                         beacon["missed_checkins"] = int(expected_checkins)
                         dead.append(beacon)
-                except Exception:
-                    pass
+                except (ValueError, TypeError, OSError) as e:
+                    logger.debug(f"Error parsing beacon checkin time: {e}")
 
         return dead
 

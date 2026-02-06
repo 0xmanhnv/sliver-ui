@@ -156,8 +156,8 @@ async def health_check():
         async with async_session() as session:
             await session.execute(text("SELECT 1"))
             db_ok = True
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Health check DB query failed: {e}")
 
     health_status = "ok" if db_ok else "degraded"
     return {

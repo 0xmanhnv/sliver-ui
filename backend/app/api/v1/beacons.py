@@ -82,6 +82,7 @@ async def kill_beacon(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return MessageResponse(message=f"Beacon {beacon_id} killed")
 
@@ -149,6 +150,7 @@ async def queue_shell_task(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -183,6 +185,7 @@ async def queue_ps_task(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -217,6 +220,7 @@ async def queue_screenshot_task(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -259,6 +263,7 @@ async def queue_download_task(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return result
 
@@ -348,6 +353,7 @@ async def queue_execute_assembly_task(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return ExecuteAssemblyTaskResponse(
         task_id=result.get("task_id", ""),

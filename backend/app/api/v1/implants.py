@@ -105,6 +105,7 @@ async def generate_implant(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     logger.info(f"Implant generated: {filename} ({len(implant_data)} bytes)")
 
@@ -149,6 +150,7 @@ async def download_implant(
         ip_address=request.client.host if request.client else None,
     )
     db.add(audit)
+    await db.commit()
 
     return StreamingResponse(
         io.BytesIO(cached["data"]),
