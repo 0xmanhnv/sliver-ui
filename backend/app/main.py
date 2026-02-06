@@ -42,6 +42,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Security checks
     if settings.secret_key == "change-me-to-a-secure-random-string":
+        if settings.is_production:
+            raise RuntimeError(
+                "FATAL: Using default SECRET_KEY in production! "
+                "Set SECRET_KEY env var to a random string (openssl rand -hex 32)."
+            )
         logger.critical(
             "SECURITY: Using default SECRET_KEY! Set SECRET_KEY env var immediately!"
         )
@@ -142,10 +147,23 @@ async def sliverui_error_handler(request: Request, exc: SliverUIException):
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint - verifies DB connectivity"""
+    db_ok = False
+    try:
+        from app.services.database import async_session
+        from sqlalchemy import text
+
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception:
+        pass
+
+    health_status = "ok" if db_ok else "degraded"
     return {
-        "status": "ok",
+        "status": health_status,
         "version": __version__,
+        "database": "ok" if db_ok else "error",
         "sliver_connected": sliver_manager.is_connected,
     }
 
@@ -158,7 +176,7 @@ app.include_router(websocket_router)
 # ---------------------------------------------------------------------------
 # Serve frontend SPA (only when static/ dir exists, i.e. unified Docker image)
 # ---------------------------------------------------------------------------
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
+STATIC_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "static"))
 if os.path.isdir(STATIC_DIR):
     from starlette.staticfiles import StaticFiles
     from starlette.responses import FileResponse
@@ -170,8 +188,13 @@ if os.path.isdir(STATIC_DIR):
     @app.get("/{full_path:path}")
     async def spa_fallback(full_path: str):
         """Serve static files or fall back to index.html for SPA routing."""
-        file_path = os.path.join(STATIC_DIR, full_path)
-        if full_path and os.path.isfile(file_path):
+        file_path = os.path.realpath(os.path.join(STATIC_DIR, full_path))
+        # Prevent path traversal: resolved path must stay within STATIC_DIR
+        if (
+            full_path
+            and file_path.startswith(STATIC_DIR + os.sep)
+            and os.path.isfile(file_path)
+        ):
             return FileResponse(file_path)
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 

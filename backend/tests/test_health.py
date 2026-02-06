@@ -21,8 +21,9 @@ async def test_health_endpoint(async_client):
     resp = await async_client.get("/health")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "ok"
+    assert data["status"] in ("ok", "degraded")
     assert "version" in data
+    assert "database" in data
     assert "sliver_connected" in data
 
 

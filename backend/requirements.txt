@@ -1,45 +1,45 @@
 # SliverUI Backend Dependencies
 #
-# NOTE: This file uses minimum version specifiers (>=) for flexibility.
+# NOTE: Uses compatible-release (~=) or bounded ranges for stability.
 # For reproducible production builds, generate a lock file:
 #   pip freeze > requirements.lock
 # Then install with: pip install -r requirements.lock
 
 # Web Framework
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-gunicorn>=21.2.0
+fastapi>=0.109.0,<1.0
+uvicorn[standard]>=0.27.0,<1.0
+gunicorn>=21.2.0,<23
 
 # Sliver Client
 sliver-py>=0.0.19
 
 # Database
-sqlalchemy>=2.0.25
-alembic>=1.13.1
-aiosqlite>=0.19.0
+sqlalchemy>=2.0.25,<3.0
+alembic>=1.13.1,<2.0
+aiosqlite>=0.19.0,<1.0
 
 # Redis
-redis>=5.0.1
-celery>=5.3.6
+redis>=5.0.1,<6.0
+celery>=5.3.6,<6.0
 
 # Authentication
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0,<4.0
+passlib[bcrypt]>=1.7.4,<2.0
 bcrypt>=4.0,<5  # bcrypt 5.x breaks passlib's _calc_checksum (incompatible API)
-python-multipart>=0.0.6
+python-multipart>=0.0.6,<1.0
 
 # Validation
-pydantic>=2.5.0
-pydantic-settings>=2.1.0
-email-validator>=2.1.0
+pydantic>=2.5.0,<3.0
+pydantic-settings>=2.1.0,<3.0
+email-validator>=2.1.0,<3.0
 
 # Async
-httpx>=0.26.0
-aiofiles>=23.2.1
+httpx>=0.26.0,<1.0
+aiofiles>=23.2.1,<25.0
 
 # Browser Automation
-websockets>=12.0
-playwright>=1.40.0
+websockets>=12.0,<14.0
+playwright>=1.40.0,<2.0
 
 # Utilities
-python-dateutil>=2.8.2
+python-dateutil>=2.8.2,<3.0

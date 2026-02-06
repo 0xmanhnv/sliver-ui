@@ -182,20 +182,33 @@ async def list_cookies(
     session_id: Optional[str] = Query(None, description="Filter by session"),
     domain: Optional[str] = Query(None, description="Filter by domain"),
     name: Optional[str] = Query(None, description="Filter by cookie name"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Max records to return"),
     user: User = Depends(require_permission("browser_ops", "read")),
     db: AsyncSession = Depends(get_db),
 ):
-    """Query stored cookies with optional filters"""
-    query = select(BrowserCookie)
+    """Query stored cookies with optional filters (paginated)"""
+    from sqlalchemy import func
+
+    base_query = select(BrowserCookie)
 
     if session_id:
-        query = query.where(BrowserCookie.session_id == session_id)
+        base_query = base_query.where(BrowserCookie.session_id == session_id)
     if domain:
-        query = query.where(BrowserCookie.domain.contains(domain))
+        base_query = base_query.where(BrowserCookie.domain.contains(domain))
     if name:
-        query = query.where(BrowserCookie.name.contains(name))
+        base_query = base_query.where(BrowserCookie.name.contains(name))
 
-    query = query.order_by(BrowserCookie.extracted_at.desc())
+    # Get total count
+    count_result = await db.execute(
+        select(func.count()).select_from(base_query.subquery())
+    )
+    total = count_result.scalar() or 0
+
+    # Paginated results
+    query = (
+        base_query.order_by(BrowserCookie.extracted_at.desc()).offset(skip).limit(limit)
+    )
     result = await db.execute(query)
     rows = result.scalars().all()
 
@@ -214,7 +227,7 @@ async def list_cookies(
         for row in rows
     ]
 
-    return CookieListResponse(cookies=cookies, total=len(cookies))
+    return CookieListResponse(cookies=cookies, total=total)
 
 
 @router.post("/cookies/export", response_model=ExportCookiesResponse)
@@ -668,11 +681,19 @@ async def inject_cookies(
 
 @router.get("/cdp-targets", response_model=CDPTargetsResponse)
 async def list_cdp_targets(
-    host: str = Query(default="127.0.0.1", description="CDP host"),
+    host: str = Query(default="127.0.0.1", description="CDP host (localhost only)"),
     port: int = Query(default=9222, ge=1, le=65535, description="CDP port"),
     user: User = Depends(require_permission("browser_ops", "read")),
 ):
     """List open tabs/targets in a CDP-enabled browser"""
+    from app.schemas.browser_ops import ALLOWED_CDP_HOSTS
+
+    if host not in ALLOWED_CDP_HOSTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"CDP host must be one of {sorted(ALLOWED_CDP_HOSTS)} to prevent SSRF",
+        )
+
     svc = BrowserOpsService(sliver=None)
     targets_raw = await svc.list_cdp_targets(host, port)
 

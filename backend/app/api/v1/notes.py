@@ -91,16 +91,20 @@ class CommandHistoryResponse(BaseModel):
 async def get_session_notes(
     session_id: str,
     session_type: str = Query("session"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Max records to return"),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_permission("sessions", "read")),
 ):
-    """Get all notes for a session"""
+    """Get notes for a session (paginated)"""
     result = await db.execute(
         select(SessionNote)
         .options(selectinload(SessionNote.user))
         .where(SessionNote.session_id == session_id)
         .where(SessionNote.session_type == session_type)
         .order_by(SessionNote.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
     notes = result.scalars().all()
 

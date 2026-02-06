@@ -4,7 +4,10 @@ Browser operations schemas for cookie extraction, proxy, and CDP debugging
 
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+# CDP connections are only allowed to the local machine to prevent SSRF
+ALLOWED_CDP_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Cookie Extraction
@@ -212,10 +215,19 @@ class DownloadProfileResponse(BaseModel):
 class InjectCookiesRequest(BaseModel):
     """Request to inject cookies into a local browser via CDP"""
 
-    host: str = Field(default="127.0.0.1", description="CDP host")
+    host: str = Field(default="127.0.0.1", description="CDP host (localhost only)")
     port: int = Field(default=9222, ge=1, le=65535, description="CDP port")
     cookie_ids: List[int] = Field(..., min_length=1, description="Cookie IDs to inject")
     url: Optional[str] = Field(None, description="Navigate to URL after injection")
+
+    @field_validator("host")
+    @classmethod
+    def validate_host_is_local(cls, v: str) -> str:
+        if v not in ALLOWED_CDP_HOSTS:
+            raise ValueError(
+                f"CDP host must be one of {sorted(ALLOWED_CDP_HOSTS)} to prevent SSRF"
+            )
+        return v
 
 
 class InjectCookiesResponse(BaseModel):
