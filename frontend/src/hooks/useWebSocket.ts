@@ -29,10 +29,9 @@ function getToken(): string | null {
 }
 
 function buildWebSocketUrl(): string {
-  const token = getToken()
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.host
-  return `${protocol}//${host}/ws?token=${token}`
+  return `${protocol}//${host}/ws`
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
@@ -180,7 +179,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         const ws = new WebSocket(buildWebSocketUrl())
 
         ws.onopen = () => {
-          console.log('WebSocket connected')
+          console.log('WebSocket connected, sending auth')
+          // Send token as first message instead of query param (avoids token in URL/logs)
+          ws.send(JSON.stringify({ type: 'auth', token }))
           setIsConnected(true)
           reconnectCountRef.current = 0
         }
@@ -272,6 +273,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     try {
       const ws = new WebSocket(buildWebSocketUrl())
       ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'auth', token }))
         setIsConnected(true)
         reconnectCountRef.current = 0
       }

@@ -139,22 +139,40 @@ async def websocket_endpoint(
     """
     WebSocket endpoint for real-time updates
 
-    Connect with: ws://host/ws?token=<jwt_token>
+    Auth methods (in priority order):
+      1. First message: {"type": "auth", "token": "<jwt>"} (preferred, avoids token in URL/logs)
+      2. Query param: ws://host/ws?token=<jwt> (legacy, kept for backward compat)
     """
-    # Authenticate
-    if not token:
-        await websocket.close(code=4001, reason="Missing token")
-        return
-
-    payload = verify_token(token, token_type="access")
-    if not payload:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
-
-    user_id = payload.get("sub")
-    client_id = f"user_{user_id}_{id(websocket)}"
-
-    await manager.connect(websocket, client_id)
+    # If token provided via query param, authenticate immediately
+    if token:
+        payload = verify_token(token, token_type="access")
+        if not payload:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
+        user_id = payload.get("sub")
+        client_id = f"user_{user_id}_{id(websocket)}"
+        await manager.connect(websocket, client_id)
+    else:
+        # Accept connection, then wait for auth message
+        await websocket.accept()
+        try:
+            data = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+            message = json.loads(data)
+            if message.get("type") != "auth" or not message.get("token"):
+                await websocket.close(code=4001, reason="Expected auth message")
+                return
+            payload = verify_token(message["token"], token_type="access")
+            if not payload:
+                await websocket.close(code=4001, reason="Invalid token")
+                return
+            user_id = payload.get("sub")
+            client_id = f"user_{user_id}_{id(websocket)}"
+            async with manager._lock:
+                manager.active_connections[client_id] = websocket
+            logger.info(f"WebSocket connected: {client_id}")
+        except (asyncio.TimeoutError, json.JSONDecodeError, Exception):
+            await websocket.close(code=4001, reason="Auth timeout or invalid message")
+            return
 
     try:
         # Send initial state
