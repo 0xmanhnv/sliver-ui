@@ -18,8 +18,8 @@ help:
 	@echo "  make test       - Run tests"
 	@echo "  make lint       - Run linters"
 	@echo "  make clean      - Clean up containers and volumes"
-	@echo "  make shell-be   - Shell into backend container"
-	@echo "  make shell-fe   - Shell into frontend container"
+	@echo "  make shell-be   - Shell into sliver-ui container"
+	@echo "  make shell-fe   - Shell into frontend dev container"
 
 # Initial setup
 setup:
@@ -36,49 +36,49 @@ setup:
 
 # Development
 dev:
-	docker-compose -f docker-compose.dev.yml up --build
+	docker compose -f docker-compose.dev.yml up --build
 
 dev-d:
-	docker-compose -f docker-compose.dev.yml up --build -d
+	docker compose -f docker-compose.dev.yml up --build -d
 
 dev-down:
-	docker-compose -f docker-compose.dev.yml down
+	docker compose -f docker-compose.dev.yml down
 
 logs:
-	docker-compose -f docker-compose.dev.yml logs -f
+	docker compose -f docker-compose.dev.yml logs -f
 
 logs-be:
-	docker-compose -f docker-compose.dev.yml logs -f backend
+	docker compose -f docker-compose.dev.yml logs -f backend
 
 logs-fe:
-	docker-compose -f docker-compose.dev.yml logs -f frontend
+	docker compose -f docker-compose.dev.yml logs -f frontend
 
 # Production
 build:
-	docker-compose build
+	docker compose build
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down
+	docker compose down
 
 restart:
-	docker-compose restart
+	docker compose restart
 
 prod-logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Database
 db-migrate:
-	docker-compose exec backend alembic upgrade head
+	docker compose exec sliver-ui alembic upgrade head
 
 db-rollback:
-	docker-compose exec backend alembic downgrade -1
+	docker compose exec sliver-ui alembic downgrade -1
 
 # User management
 create-admin:
-	docker-compose exec backend python -c "from app.cli import create_admin; import asyncio; asyncio.run(create_admin())"
+	docker compose exec sliver-ui python -c "from app.cli import create_admin; import asyncio; asyncio.run(create_admin())"
 
 # Testing
 test:
@@ -102,18 +102,18 @@ lint-fix:
 
 # Shells
 shell-be:
-	docker-compose exec backend /bin/sh
+	docker compose exec sliver-ui /bin/bash
 
 shell-fe:
-	docker-compose exec frontend /bin/sh
+	docker compose -f docker-compose.dev.yml exec frontend /bin/sh
 
 shell-db:
-	docker-compose exec backend python -c "from app.services.database import async_session_maker; import asyncio; print('Use async_session_maker for DB access')"
+	docker compose exec sliver-ui python -c "from app.services.database import async_session_maker; import asyncio; print('Use async_session_maker for DB access')"
 
 # Cleanup
 clean:
-	docker-compose -f docker-compose.dev.yml down -v --remove-orphans
-	docker-compose down -v --remove-orphans
+	docker compose -f docker-compose.dev.yml down -v --remove-orphans
+	docker compose down -v --remove-orphans
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name node_modules -exec rm -rf {} + 2>/dev/null || true
@@ -136,7 +136,7 @@ backup:
 
 # Status
 status:
-	docker-compose ps
+	docker compose ps
 	@echo ""
 	@echo "Health check:"
 	@curl -s http://localhost:8000/health 2>/dev/null || echo "Backend not reachable"

@@ -89,7 +89,20 @@ updates:
         patterns: ["@tanstack/*"]
         update-types: ["minor", "patch"]
 
-  # Docker base images
+  # Docker base images - Unified Dockerfile (project root)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Docker base images - Backend standalone
   - package-ecosystem: "docker"
     directory: "/backend"
     schedule:
@@ -102,6 +115,7 @@ updates:
       - "dependencies"
       - "docker"
 
+  # Docker base images - Frontend standalone
   - package-ecosystem: "docker"
     directory: "/frontend"
     schedule:

@@ -1,20 +1,16 @@
 # =============================================================================
 # SliverUI Docker Compose -- Pull from Docker Hub
 # =============================================================================
-# Deploys SliverUI using pre-built images from Docker Hub.
+# Deploys SliverUI using a pre-built unified image from Docker Hub.
 # No source code or local build required.
 #
 # Usage:
 #   1. Copy this file + .env.example to your server
 #   2. Create .env and set SECRET_KEY + ADMIN_PASSWORD
 #   3. Place SSL certs in ./certs/ (cert.pem, key.pem)
-#   4. Place nginx config in ./nginx/nginx.prod.conf
+#   4. Place nginx config in ./nginx/nginx.conf
 #   5. Place Sliver operator config in ./config/operator.cfg
-#   6. Extract frontend static files:
-#      docker create --name tmp ${DOCKERHUB_USERNAME:-0xmanhnv}/sliverui-frontend:latest
-#      docker cp tmp:/usr/share/nginx/html ./static
-#      docker rm tmp
-#   7. Start: docker compose -f docker-compose.hub.yml up -d
+#   6. Start: docker compose -f docker-compose.hub.yml up -d
 #
 # Version pinning:
 #   Set SLIVERUI_VERSION=1.0.0 in .env to pin to a specific release.
@@ -22,9 +18,9 @@
 # =============================================================================
 
 services:
-  backend:
-    image: ${DOCKERHUB_USERNAME:-0xmanhnv}/sliverui-backend:${SLIVERUI_VERSION:-latest}
-    container_name: sliverui-backend
+  sliver-ui:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/sliver-ui:${SLIVERUI_VERSION:-latest}
+    container_name: sliver-ui
     network_mode: host
     restart: unless-stopped
     environment:
@@ -54,10 +50,9 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/nginx/ssl:ro
-      - ./static:/usr/share/nginx/html:ro
       - ./logs/nginx:/var/log/nginx
     depends_on:
-      backend:
+      sliver-ui:
         condition: service_healthy

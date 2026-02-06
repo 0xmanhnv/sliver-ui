@@ -3,6 +3,7 @@ SliverUI - Main FastAPI Application
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -154,7 +155,27 @@ app.include_router(api_router, prefix=settings.api_v1_prefix)
 app.include_router(websocket_router)
 
 
-# Root redirect
-@app.get("/")
-async def root():
-    return {"message": f"Welcome to {settings.app_name}", "version": __version__}
+# ---------------------------------------------------------------------------
+# Serve frontend SPA (only when static/ dir exists, i.e. unified Docker image)
+# ---------------------------------------------------------------------------
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.isdir(STATIC_DIR):
+    from starlette.staticfiles import StaticFiles
+    from starlette.responses import FileResponse
+
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
+
+    @app.get("/{full_path:path}")
+    async def spa_fallback(full_path: str):
+        """Serve static files or fall back to index.html for SPA routing."""
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+else:
+    # Dev mode: no static dir, simple root endpoint
+    @app.get("/")
+    async def root():
+        return {"message": f"Welcome to {settings.app_name}", "version": __version__}

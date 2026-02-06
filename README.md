@@ -9,281 +9,400 @@ Web-based GUI for [Sliver C2 Framework](https://github.com/BishopFox/sliver).
 - **Beacon Management** - View and manage beacon callbacks
 - **Implant Builder** - Visual form-based implant generation
 - **Listener Management** - Start/stop listeners with one click
-- **Multi-user Support** - Role-based access control (RBAC)
+- **Browser Ops** - Cookie extraction, profile hijacking, Playwright automation
+- **Multi-user Support** - Role-based access control (admin / operator / viewer)
 - **Audit Logging** - Track all operator actions
-
-## Quick Start
-
-### Prerequisites
-
-- Docker & Docker Compose
-- Sliver server running with operator config
-- SSL certificates (self-signed or valid)
-
-### Setup
-
-```bash
-# Clone and enter directory
-cd sliver-gui
-
-# Initial setup
-make setup
-
-# Generate self-signed SSL (development only)
-make ssl-gen
-
-# Copy your Sliver operator config
-cp /path/to/operator.cfg config/
-
-# Edit configuration
-nano .env
-
-# Start development environment
-make dev
-```
-
-### Access
-
-- **Development**: http://localhost:5173
-- **Production**: https://localhost:8443
-
-**Default credentials:**
-- Username: `admin`
-- Password: `changeme123`
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Browser                              │
-│                    (React + TailwindCSS)                     │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ HTTPS
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       Nginx (TLS)                            │
-└─────────────────────────────┬───────────────────────────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-              ▼                               ▼
-┌─────────────────────────┐     ┌─────────────────────────┐
-│   FastAPI Backend       │     │    React Frontend       │
-│   (Python + SliverPy)   │     │    (Static files)       │
-└────────────┬────────────┘     └─────────────────────────┘
-             │
-             │ gRPC (mTLS)
-             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Sliver Server                           │
-└─────────────────────────────────────────────────────────────┘
+Browser ──HTTPS──▶ Nginx (:443, TLS termination)
+                      │
+                      ▼
+                  sliver-ui (:8000)
+                  ┌──────────────────────────┐
+                  │ FastAPI + Gunicorn        │
+                  │  /api/v1/*  → REST API    │
+                  │  /ws        → WebSocket   │
+                  │  /health    → Health check│
+                  │  /assets/*  → Static (JS) │
+                  │  /*         → SPA (React) │
+                  └──────────┬───────────────┘
+                             │ gRPC (mTLS)
+                             ▼
+                       Sliver Server
 ```
 
-## Configuration
+The project builds into a **single Docker image** (`sliver-ui:latest`) that bundles the React frontend and the FastAPI backend together. Nginx runs as a separate container handling TLS only.
 
-### Environment Variables
+---
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SECRET_KEY` | JWT signing key | (required) |
-| `DATABASE_URL` | SQLite database path | `sqlite:///./data/sliverui.db` |
-| `REDIS_URL` | Redis connection URL | `redis://redis:6379/0` |
-| `SLIVER_CONFIG` | Path to operator.cfg | `/app/config/operator.cfg` |
-| `JWT_EXPIRE_MINUTES` | Token expiry | `60` |
-| `CORS_ORIGINS` | Allowed origins | `http://localhost:5173` |
+## Prerequisites
 
-### Sliver Operator Config
+- Docker Engine 24+ and Docker Compose v2+
+- A running Sliver C2 server with an operator config file
+- SSL certificates for HTTPS (self-signed or CA-signed)
 
-Generate an operator config from your Sliver server:
+---
+
+## Quick Start (Production)
+
+### Step 1 - Prepare directories and config
 
 ```bash
-# On Sliver server
-sliver > new-operator --name sliverui --lhost your-server-ip
-
-# Copy the generated .cfg file to config/operator.cfg
+make setup
 ```
 
-## Development
+This creates: `data/`, `logs/`, `config/`, `certs/`.
 
-### Backend
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements-dev.txt
-
-# Run development server
-uvicorn app.main:app --reload --port 8000
-```
-
-### Frontend
+### Step 2 - Create `.env`
 
 ```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
-
-### Running Tests
-
-```bash
-# All tests
-make test
-
-# Backend only
-make test-be
-
-# Frontend only
-make test-fe
-```
-
-## Production Deployment
-
-### 1. Configure Environment
-
-```bash
-# Copy and edit .env
 cp .env.example .env
-nano .env
-
-# Set a strong SECRET_KEY
-SECRET_KEY=$(openssl rand -hex 32)
 ```
 
-### 2. SSL Certificates
+Edit `.env` and set **at minimum**:
+
+```ini
+SECRET_KEY=<random-string-at-least-32-chars>
+ADMIN_PASSWORD=<strong-password>
+```
+
+Generate a random secret key:
 
 ```bash
-# Option A: Self-signed (testing only)
+openssl rand -hex 32
+```
+
+### Step 3 - Sliver operator config
+
+On your Sliver server, generate an operator config:
+
+```bash
+sliver > new-operator --name sliverui --lhost <sliver-server-ip> --permissions all
+```
+
+Copy the resulting `.cfg` file into this project:
+
+```bash
+cp /path/to/sliverui.cfg config/operator.cfg
+```
+
+### Step 4 - SSL certificates
+
+```bash
+# Option A: Self-signed (for testing)
 make ssl-gen
 
 # Option B: Let's Encrypt
 certbot certonly --standalone -d your-domain.com
-cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/cert.pem
-cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/key.pem
+cp /etc/letsencrypt/live/your-domain.com/fullchain.pem certs/cert.pem
+cp /etc/letsencrypt/live/your-domain.com/privkey.pem   certs/key.pem
 ```
 
-### 3. Deploy
+### Step 5 - Build and start
 
 ```bash
-# Build and start
-make build
-make up
-
-# Check status
-make status
-docker-compose logs -f
+make build    # Build the unified Docker image
+make up       # Start sliver-ui + nginx containers
 ```
 
-### 4. Post-deployment
+### Step 6 - Verify
 
 ```bash
-# Change default admin password immediately!
-# Login to UI and go to Settings
+# Backend health
+curl -f http://localhost:8000/health
 
-# Or via CLI
-docker-compose exec backend python -c "
-from app.services.database import async_session_maker
-from app.models import User
-from app.core.security import get_password_hash
-import asyncio
+# Frontend via nginx
+curl -k https://localhost/
 
-async def change_password():
-    async with async_session_maker() as session:
-        result = await session.execute(
-            select(User).where(User.username == 'admin')
-        )
-        user = result.scalar_one()
-        user.password_hash = get_password_hash('YOUR_NEW_PASSWORD')
-        await session.commit()
-
-asyncio.run(change_password())
-"
+# API via nginx
+curl -k https://localhost/api/v1/auth/me
 ```
+
+Open `https://<your-ip>` in a browser and log in with the credentials from `.env`.
+
+---
+
+## Quick Start (Docker Hub - No Build)
+
+Use `docker-compose.hub.yml` to deploy from a pre-built image without needing the source code.
+
+```bash
+# 1. Copy these files to your server:
+#    docker-compose.hub.yml, .env.example, nginx/nginx.conf
+
+# 2. Create .env
+cp .env.example .env
+# Set: SECRET_KEY, ADMIN_PASSWORD, DOCKERHUB_USERNAME
+
+# 3. Create directories
+mkdir -p data logs logs/nginx config certs
+
+# 4. Place operator config and SSL certs
+cp /path/to/operator.cfg config/
+cp /path/to/cert.pem certs/
+cp /path/to/key.pem  certs/
+
+# 5. Start
+docker compose -f docker-compose.hub.yml up -d
+```
+
+---
+
+## Development
+
+### Docker dev environment (hot-reload)
+
+```bash
+make dev          # Start frontend + backend + redis with hot-reload
+make logs         # Tail all dev logs
+make logs-be      # Backend logs only
+make logs-fe      # Frontend logs only
+make dev-down     # Stop dev environment
+```
+
+Access:
+- Frontend: `https://localhost` (port 443 mapped from Vite :5173)
+- Backend API: `http://localhost:8000`
+
+### Local development (no Docker)
+
+```bash
+# Terminal 1 - Backend
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 - Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+### Tests and linting
+
+```bash
+make test         # Run all tests (backend + frontend)
+make test-be      # Backend tests with coverage
+make test-fe      # Frontend tests
+make lint         # Check style
+make lint-fix     # Auto-fix style issues
+```
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `SECRET_KEY` | Yes | - | JWT signing key (min 32 chars) |
+| `ADMIN_PASSWORD` | Yes | - | Password for the initial admin account |
+| `ADMIN_USERNAME` | No | `admin` | Username for the initial admin account |
+| `DATABASE_URL` | No | `sqlite:///./data/sliverui.db` | Database connection string |
+| `SLIVER_CONFIG` | No | `/app/config/operator.cfg` | Path to Sliver operator config inside container |
+| `LOG_LEVEL` | No | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
+| `GITHUB_TOKEN` | No | - | GitHub token for armory (raises rate limit from 60 to 5000 req/hour) |
+| `APP_ENV` | No | `production` | Set to `development` to enable API docs |
+
+---
+
+## Container Management
+
+### Common operations
+
+```bash
+make up           # Start production containers
+make down         # Stop production containers
+make restart      # Restart all containers
+make status       # Show container status + health check
+make prod-logs    # Tail production logs
+```
+
+### Database
+
+```bash
+make db-migrate   # Apply pending Alembic migrations
+make db-rollback  # Rollback the last migration
+```
+
+### Shell access
+
+```bash
+make shell-be     # Bash shell inside the sliver-ui container
+```
+
+### Backup
+
+```bash
+make backup       # Snapshot the SQLite database to backups/
+```
+
+---
+
+## Directory Structure
+
+```
+sliver-ui/
+├── Dockerfile              # Unified multi-stage build (frontend + backend)
+├── docker-compose.yml      # Production: sliver-ui + nginx
+├── docker-compose.hub.yml  # Production: pull pre-built image + nginx
+├── docker-compose.dev.yml  # Development: backend + frontend + redis
+├── Makefile                # Make targets for common operations
+├── .env.example            # Template for environment variables
+├── backend/
+│   ├── Dockerfile          # Backend-only image (standalone / dev)
+│   ├── Dockerfile.dev      # Backend dev image (hot-reload)
+│   ├── requirements.txt
+│   ├── alembic.ini
+│   ├── alembic/            # Database migrations
+│   └── app/                # FastAPI application
+│       ├── main.py
+│       ├── api/v1/         # REST API routes
+│       ├── models/         # SQLAlchemy models
+│       ├── schemas/        # Pydantic schemas
+│       ├── services/       # Business logic
+│       └── middleware/      # Rate limiting, etc.
+├── frontend/
+│   ├── Dockerfile          # Frontend-only image (standalone / dev)
+│   ├── Dockerfile.dev      # Frontend dev image (hot-reload)
+│   ├── package.json
+│   └── src/                # React + TypeScript + TailwindCSS
+├── nginx/
+│   └── nginx.conf          # Nginx config (TLS + reverse proxy)
+├── certs/                  # SSL certificates (cert.pem, key.pem)
+├── config/                 # Sliver operator config (operator.cfg)
+├── data/                   # SQLite database (persistent)
+└── logs/                   # Application + nginx logs
+```
+
+---
 
 ## User Roles
 
 | Role | Permissions |
 |------|-------------|
-| **admin** | Full access, user management |
-| **operator** | Sessions, beacons, implants, listeners |
-| **viewer** | Read-only access |
+| **admin** | Full access: user management, settings, all operations |
+| **operator** | Sessions, beacons, implants, listeners, browser ops |
+| **viewer** | Read-only: dashboard, view sessions and beacons |
+
+---
 
 ## API Documentation
 
-When running in development mode, API docs are available at:
+Available when `APP_ENV=development`:
 
 - Swagger UI: http://localhost:8000/api/docs
 - ReDoc: http://localhost:8000/api/redoc
-- OpenAPI JSON: http://localhost:8000/api/openapi.json
 
-## Security Considerations
-
-1. **Change default credentials** immediately after deployment
-2. **Use strong SECRET_KEY** (at least 32 random characters)
-3. **Use valid SSL certificates** in production
-4. **Restrict network access** to trusted IPs only
-5. **Enable audit logging** and review regularly
-6. **Keep Sliver and SliverUI updated**
+---
 
 ## Troubleshooting
 
-### Cannot connect to Sliver
+### Sliver connection fails
 
 ```bash
 # Check if operator config is valid
-docker-compose exec backend python -c "
+docker compose exec sliver-ui python -c "
 from sliver import SliverClientConfig
-config = SliverClientConfig.parse_config_file('/app/config/operator.cfg')
-print(f'Server: {config.host}:{config.port}')
+cfg = SliverClientConfig.parse_config_file('/app/config/operator.cfg')
+print(f'Target: {cfg.host}:{cfg.port}')
 "
 
-# Check connectivity
-docker-compose exec backend python -c "
+# Test live connection
+docker compose exec sliver-ui python -c "
 import asyncio
 from app.services.sliver_client import sliver_manager
 asyncio.run(sliver_manager.connect())
-print('Connected!' if sliver_manager.is_connected else 'Failed')
+print('OK' if sliver_manager.is_connected else 'FAIL')
 "
 ```
 
-### Database issues
+Common causes:
+- Sliver server not reachable over WireGuard / VPN
+- Operator config expired or generated for a different server
+- Sliver DB was reset (all operator configs become invalid)
+
+### Database reset
 
 ```bash
-# Reset database
-rm data/sqlite/sliverui.db
-make up
-
-# The database will be recreated with default admin user
+rm data/sliverui.db
+make down && make up
+# Database is recreated automatically on startup
 ```
 
-### Container issues
+### Container won't start
 
 ```bash
-# View logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f sliver-ui    # Check backend logs
+docker compose logs -f nginx        # Check nginx logs
 
-# Rebuild containers
-docker-compose build --no-cache
-docker-compose up -d
+# Full rebuild
+docker compose build --no-cache
+docker compose up -d
 ```
+
+### Port conflicts
+
+Both containers use `network_mode: host`. Check for conflicts on ports **80**, **443** (nginx) and **8000** (sliver-ui):
+
+```bash
+ss -tlnp | grep -E ':(80|443|8000)\b'
+```
+
+---
+
+## Make Targets Reference
+
+| Target | Description |
+|--------|-------------|
+| `make help` | Show all available targets |
+| `make setup` | Create directories, copy example configs |
+| `make build` | Build unified production image |
+| `make up` | Start production stack |
+| `make down` | Stop production stack |
+| `make restart` | Restart all containers |
+| `make status` | Show container status + health |
+| `make prod-logs` | Tail production logs |
+| `make dev` | Start dev environment (hot-reload) |
+| `make dev-d` | Start dev environment (detached) |
+| `make dev-down` | Stop dev environment |
+| `make logs` | Tail dev logs |
+| `make logs-be` | Tail backend dev logs |
+| `make logs-fe` | Tail frontend dev logs |
+| `make db-migrate` | Run Alembic migrations |
+| `make db-rollback` | Rollback last migration |
+| `make shell-be` | Shell into sliver-ui container |
+| `make shell-fe` | Shell into frontend dev container |
+| `make test` | Run all tests |
+| `make test-be` | Backend tests with coverage |
+| `make test-fe` | Frontend tests |
+| `make lint` | Check code style |
+| `make lint-fix` | Auto-fix code style |
+| `make ssl-gen` | Generate self-signed SSL cert |
+| `make backup` | Backup SQLite database |
+| `make clean` | Remove containers, volumes, caches |
+
+---
+
+## Security Notes
+
+1. Always set a strong `SECRET_KEY` and `ADMIN_PASSWORD` before deploying
+2. Use valid SSL certificates in production (not self-signed)
+3. Restrict network access - only expose nginx to trusted networks
+4. Review audit logs regularly via the UI
+5. If the Sliver DB is reset, all operator configs become invalid - regenerate them
+
+---
 
 ## License
 
-This project is for authorized security testing only.
+For authorized security testing and research only.
 
 ## Credits
 
-- [Sliver](https://github.com/BishopFox/sliver) by BishopFox
-- [SliverPy](https://github.com/moloch--/sliver-py) for Python bindings
-- [FastAPI](https://fastapi.tiangolo.com/) for the backend framework
-- [React](https://react.dev/) + [TailwindCSS](https://tailwindcss.com/) for the frontend
+- [Sliver C2](https://github.com/BishopFox/sliver) by BishopFox
+- [SliverPy](https://github.com/moloch--/sliver-py) - Python client bindings
+- [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
+- [React](https://react.dev/) + [TailwindCSS](https://tailwindcss.com/) - Frontend

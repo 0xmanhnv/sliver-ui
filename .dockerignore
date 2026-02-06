@@ -1,0 +1,40 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (rebuilt in Docker)
+node_modules
+frontend/node_modules
+backend/__pycache__
+**/__pycache__
+**/*.pyc
+
+# Runtime data
+data/
+logs/
+backups/
+
+# Secrets / certs
+certs/
+.env
+.env.*
+!.env.example
+config/operator.cfg
+
+# Dev files
+docker-compose.dev.yml
+backend/Dockerfile.dev
+frontend/Dockerfile.dev
+*.md
+.vscode/
+.idea/
+
+# Test / coverage
+.pytest_cache
+htmlcov/
+.coverage
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
