@@ -45,9 +45,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.critical(
             "SECURITY: Using default SECRET_KEY! Set SECRET_KEY env var immediately!"
         )
-    if settings.admin_password == "changeme123":
+    if len(settings.admin_password) < 10:
         logger.warning(
-            "SECURITY: Using default admin password. Set ADMIN_PASSWORD env var."
+            "SECURITY: ADMIN_PASSWORD is shorter than 10 characters. Use a stronger password."
         )
 
     # Initialize database

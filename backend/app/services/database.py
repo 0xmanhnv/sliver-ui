@@ -166,7 +166,7 @@ async def seed_data(session: AsyncSession) -> None:
     logger.info(
         f"Initial data seeded successfully (admin user: {settings.admin_username})"
     )
-    if settings.admin_password == "changeme123":
+    if len(settings.admin_password) < 10:
         logger.warning(
-            "Using default admin password 'changeme123' - set ADMIN_PASSWORD env var!"
+            "ADMIN_PASSWORD is shorter than 10 characters - use a stronger password!"
         )

@@ -65,8 +65,9 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in v.split(",") if origin.strip()]
 
     # Admin credentials (used for initial database seed)
+    # Both are REQUIRED — set ADMIN_USERNAME / ADMIN_PASSWORD env vars or .env file
     admin_username: str = "admin"
-    admin_password: str = "changeme123"
+    admin_password: str
 
     # Rate Limiting
     rate_limit_per_minute: int = 100

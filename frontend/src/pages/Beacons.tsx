@@ -35,7 +35,7 @@ export function Beacons() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['beacons'],
     queryFn: beaconsApi.list,
     refetchInterval: 10000,
@@ -74,15 +74,12 @@ export function Beacons() {
     return '💻'
   }
 
-  // Snapshot current time once per data fetch (avoids impure Date.now() during render)
-  const now = data ? Date.now() : 0
-
-  // Calculate time since last check-in
+  // Calculate time since last check-in using dataUpdatedAt (pure value from react-query)
   const getCheckInStatus = useCallback((lastCheckin: string | null, interval: number) => {
     if (!lastCheckin) return { status: 'pending', color: 'bg-yellow-500' }
 
     const lastTime = new Date(lastCheckin).getTime()
-    const diff = (now - lastTime) / 1000 // seconds
+    const diff = (dataUpdatedAt - lastTime) / 1000 // seconds
 
     if (diff < interval * 1.5) {
       return { status: 'active', color: 'bg-green-500' }
@@ -91,7 +88,7 @@ export function Beacons() {
     } else {
       return { status: 'missed', color: 'bg-red-500' }
     }
-  }, [now])
+  }, [dataUpdatedAt])
 
   return (
     <div className="h-full flex flex-col">

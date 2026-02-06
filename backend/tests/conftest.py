@@ -2,6 +2,11 @@
 Shared test fixtures for SliverUI backend tests.
 """
 
+import os
+
+# Set required env vars BEFORE importing app modules (Settings reads env at import time)
+os.environ.setdefault("ADMIN_PASSWORD", "testpassword123")
+
 from unittest.mock import PropertyMock, patch
 
 import pytest
