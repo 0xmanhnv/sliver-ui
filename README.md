@@ -163,7 +163,7 @@ make dev-down     # Stop dev environment
 ```
 
 Access:
-- Frontend: `https://localhost` (port 443 mapped from Vite :5173)
+- Frontend: `http://localhost:443` (port 443 mapped from Vite :5173, plain HTTP)
 - Backend API: `http://localhost:8000`
 
 ### Local development (no Docker)
@@ -271,10 +271,11 @@ sliver-ui/
 │   └── src/                # React + TypeScript + TailwindCSS
 ├── nginx/
 │   └── nginx.conf          # Nginx config (TLS + reverse proxy)
-├── certs/                  # SSL certificates (cert.pem, key.pem)
-├── config/                 # Sliver operator config (operator.cfg)
-├── data/                   # SQLite database (persistent)
-└── logs/                   # Application + nginx logs
+├── certs/                  # SSL certificates (cert.pem, key.pem) - mounted into nginx
+├── config/                 # Sliver operator config (operator.cfg) - mounted read-only
+├── data/                   # SQLite database (sliverui.db) - persistent volume
+├── logs/                   # Application logs
+└── logs/nginx/             # Nginx access/error logs
 ```
 
 ---
