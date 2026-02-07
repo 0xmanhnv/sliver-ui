@@ -62,10 +62,11 @@ async def init_db() -> None:
             await seed_data(session)
     except Exception as e:
         # Tables may already exist from another worker
-        if "already exists" not in str(e):
+        if "already exists" in str(e) or "UNIQUE constraint" in str(e):
+            logger.info("Database tables already exist, skipping init")
+        else:
             logger.error(f"Database init error: {e}")
             raise
-        logger.info("Database tables already exist, skipping init")
 
 
 async def close_db() -> None:
@@ -74,8 +75,14 @@ async def close_db() -> None:
 
 
 async def seed_data(session: AsyncSession) -> None:
-    """Seed initial roles, permissions, and admin user"""
+    """Seed initial roles, permissions, and admin user.
+
+    Safe for concurrent workers: uses IntegrityError handling
+    to avoid race conditions when multiple gunicorn workers
+    try to seed simultaneously.
+    """
     from sqlalchemy import select, insert
+    from sqlalchemy.exc import IntegrityError
 
     # Check if roles exist
     result = await session.execute(select(Role).limit(1))
@@ -84,89 +91,94 @@ async def seed_data(session: AsyncSession) -> None:
 
     logger.info("Seeding initial data...")
 
-    # Create roles
-    admin_role = Role(name="admin", description="Full system access")
-    operator_role = Role(
-        name="operator", description="Can manage sessions and execute commands"
-    )
-    viewer_role = Role(name="viewer", description="Read-only access")
-
-    session.add_all([admin_role, operator_role, viewer_role])
-    await session.flush()
-
-    # Create permissions
-    resources = [
-        "sessions",
-        "beacons",
-        "implants",
-        "listeners",
-        "files",
-        "users",
-        "audit",
-    ]
-    actions = ["read", "write", "execute", "delete"]
-
-    permissions = []
-    for resource in resources:
-        for action in actions:
-            perm = Permission(
-                name=f"{resource}.{action}",
-                resource=resource,
-                action=action,
-            )
-            permissions.append(perm)
-            session.add(perm)
-
-    await session.flush()
-
-    # Import the association table
-    from app.models.user import role_permissions
-
-    # Assign permissions to roles using direct insert to association table
-    # This avoids lazy-loading issues with async SQLAlchemy
-
-    # Admin gets all permissions
-    admin_perm_records = [
-        {"role_id": admin_role.id, "permission_id": p.id} for p in permissions
-    ]
-    if admin_perm_records:
-        await session.execute(insert(role_permissions), admin_perm_records)
-
-    # Operator gets all except user management
-    operator_perm_records = [
-        {"role_id": operator_role.id, "permission_id": p.id}
-        for p in permissions
-        if p.resource not in ["users", "audit"]
-    ]
-    if operator_perm_records:
-        await session.execute(insert(role_permissions), operator_perm_records)
-
-    # Viewer gets read-only
-    viewer_perm_records = [
-        {"role_id": viewer_role.id, "permission_id": p.id}
-        for p in permissions
-        if p.action == "read"
-    ]
-    if viewer_perm_records:
-        await session.execute(insert(role_permissions), viewer_perm_records)
-
-    await session.flush()
-
-    # Create default admin user (reads from ADMIN_USERNAME/ADMIN_PASSWORD env vars)
-    admin_user = User(
-        username=settings.admin_username,
-        email=f"{settings.admin_username}@sliverui.local",
-        password_hash=get_password_hash(settings.admin_password),
-        role_id=admin_role.id,
-        is_active=True,
-    )
-    session.add(admin_user)
-
-    await session.commit()
-    logger.info(
-        f"Initial data seeded successfully (admin user: {settings.admin_username})"
-    )
-    if len(settings.admin_password) < 10:
-        logger.warning(
-            "ADMIN_PASSWORD is shorter than 10 characters - use a stronger password!"
+    try:
+        # Create roles
+        admin_role = Role(name="admin", description="Full system access")
+        operator_role = Role(
+            name="operator", description="Can manage sessions and execute commands"
         )
+        viewer_role = Role(name="viewer", description="Read-only access")
+
+        session.add_all([admin_role, operator_role, viewer_role])
+        await session.flush()
+
+        # Create permissions
+        resources = [
+            "sessions",
+            "beacons",
+            "implants",
+            "listeners",
+            "files",
+            "users",
+            "audit",
+        ]
+        actions = ["read", "write", "execute", "delete"]
+
+        permissions = []
+        for resource in resources:
+            for action in actions:
+                perm = Permission(
+                    name=f"{resource}.{action}",
+                    resource=resource,
+                    action=action,
+                )
+                permissions.append(perm)
+                session.add(perm)
+
+        await session.flush()
+
+        # Import the association table
+        from app.models.user import role_permissions
+
+        # Assign permissions to roles using direct insert to association table
+        # This avoids lazy-loading issues with async SQLAlchemy
+
+        # Admin gets all permissions
+        admin_perm_records = [
+            {"role_id": admin_role.id, "permission_id": p.id} for p in permissions
+        ]
+        if admin_perm_records:
+            await session.execute(insert(role_permissions), admin_perm_records)
+
+        # Operator gets all except user management
+        operator_perm_records = [
+            {"role_id": operator_role.id, "permission_id": p.id}
+            for p in permissions
+            if p.resource not in ["users", "audit"]
+        ]
+        if operator_perm_records:
+            await session.execute(insert(role_permissions), operator_perm_records)
+
+        # Viewer gets read-only
+        viewer_perm_records = [
+            {"role_id": viewer_role.id, "permission_id": p.id}
+            for p in permissions
+            if p.action == "read"
+        ]
+        if viewer_perm_records:
+            await session.execute(insert(role_permissions), viewer_perm_records)
+
+        await session.flush()
+
+        # Create default admin user (reads from ADMIN_USERNAME/ADMIN_PASSWORD env vars)
+        admin_user = User(
+            username=settings.admin_username,
+            email=f"{settings.admin_username}@sliverui.local",
+            password_hash=get_password_hash(settings.admin_password),
+            role_id=admin_role.id,
+            is_active=True,
+        )
+        session.add(admin_user)
+
+        await session.commit()
+        logger.info(
+            f"Initial data seeded successfully (admin user: {settings.admin_username})"
+        )
+        if len(settings.admin_password) < 10:
+            logger.warning(
+                "ADMIN_PASSWORD is shorter than 10 characters - use a stronger password!"
+            )
+    except IntegrityError:
+        # Another worker already seeded the database — this is expected
+        await session.rollback()
+        logger.info("Database already seeded by another worker, skipping")
