@@ -137,8 +137,12 @@ class SliverManager:
         """Execute shell command on session"""
         try:
             session = await self._client.interact_session(session_id)
+            # sliver-py execute() takes (exe, args, output) — split command
+            parts = command.split()
+            exe = parts[0] if parts else command
+            args = parts[1:] if len(parts) > 1 else []
             result = await asyncio.wait_for(
-                session.execute(command, output=True), timeout=timeout
+                session.execute(exe, args, output=True), timeout=timeout
             )
             return {
                 "output": result.Stdout.decode() if result.Stdout else "",
@@ -155,7 +159,8 @@ class SliverManager:
         """Get process list from session"""
         try:
             session = await self._client.interact_session(session_id)
-            result = await session.ps()
+            # sliver-py ps() returns List[Process] directly, not a wrapper
+            processes = await session.ps()
             return [
                 {
                     "pid": p.Pid,
@@ -164,7 +169,7 @@ class SliverManager:
                     "owner": p.Owner,
                     "architecture": p.Architecture,
                 }
-                for p in result.Processes
+                for p in processes
             ]
         except Exception as e:
             raise SliverCommandError(f"Failed to get process list: {str(e)}")
@@ -245,7 +250,7 @@ class SliverManager:
     async def kill_beacon(self, beacon_id: str) -> bool:
         """Kill a beacon"""
         try:
-            await self._client.rm_beacon(beacon_id)
+            await self._client.kill_beacon(beacon_id)
             return True
         except Exception as e:
             raise SliverCommandError(f"Failed to kill beacon: {str(e)}")
@@ -258,21 +263,40 @@ class SliverManager:
         except Exception as e:
             raise SliverCommandError(f"Failed to get beacon tasks: {str(e)}")
 
+    async def _queue_beacon_task(self, beacon_id: str, stub_method: str, request_pb) -> str:
+        """Queue a task on a beacon via direct gRPC call, return task ID.
+
+        sliver-py 0.0.19's beacon_taskresult decorator returns asyncio.Future
+        instead of the task response, and beacon.ps() is broken (base method
+        converts protobuf to list before decorator can read .Response.TaskID).
+        Bypass the decorator entirely by calling the gRPC stub directly.
+        """
+        beacon = await self._client.interact_beacon(beacon_id)
+        beacon._request(request_pb)  # sets BeaconID, Timeout, Async=True
+        method = getattr(beacon._stub, stub_method)
+        result = await method(request_pb, timeout=beacon.timeout)
+        return result.Response.TaskID
+
     async def beacon_shell(self, beacon_id: str, command: str) -> dict:
         """Queue shell command on beacon"""
         try:
-            beacon = await self._client.interact_beacon(beacon_id)
-            task = await beacon.execute(command, output=True)
-            return {"task_id": task.TaskID, "beacon_id": beacon_id, "command": command}
+            from sliver.protobuf import sliver_pb2 as _pb2
+            parts = command.split()
+            exe = parts[0] if parts else command
+            args = parts[1:] if len(parts) > 1 else []
+            req = _pb2.ExecuteReq(Path=exe, Args=args, Output=True)
+            task_id = await self._queue_beacon_task(beacon_id, "Execute", req)
+            return {"task_id": task_id, "beacon_id": beacon_id, "command": command}
         except Exception as e:
             raise SliverCommandError(f"Failed to queue shell task: {str(e)}")
 
     async def beacon_download(self, beacon_id: str, remote_path: str) -> dict:
         """Queue download task on beacon"""
         try:
-            beacon = await self._client.interact_beacon(beacon_id)
-            task = await beacon.download(remote_path)
-            return {"task_id": task.TaskID, "beacon_id": beacon_id, "path": remote_path}
+            from sliver.protobuf import sliver_pb2 as _pb2
+            req = _pb2.DownloadReq(Path=remote_path)
+            task_id = await self._queue_beacon_task(beacon_id, "Download", req)
+            return {"task_id": task_id, "beacon_id": beacon_id, "path": remote_path}
         except Exception as e:
             raise SliverCommandError(f"Failed to queue download task: {str(e)}")
 
@@ -281,27 +305,30 @@ class SliverManager:
     ) -> dict:
         """Queue upload task on beacon"""
         try:
-            beacon = await self._client.interact_beacon(beacon_id)
-            task = await beacon.upload(remote_path, data)
-            return {"task_id": task.TaskID, "beacon_id": beacon_id, "path": remote_path}
+            from sliver.protobuf import sliver_pb2 as _pb2
+            req = _pb2.UploadReq(Path=remote_path, Data=data)
+            task_id = await self._queue_beacon_task(beacon_id, "Upload", req)
+            return {"task_id": task_id, "beacon_id": beacon_id, "path": remote_path}
         except Exception as e:
             raise SliverCommandError(f"Failed to queue upload task: {str(e)}")
 
     async def beacon_ps(self, beacon_id: str) -> dict:
         """Queue process list task on beacon"""
         try:
-            beacon = await self._client.interact_beacon(beacon_id)
-            task = await beacon.ps()
-            return {"task_id": task.TaskID, "beacon_id": beacon_id}
+            from sliver.protobuf import sliver_pb2 as _pb2
+            req = _pb2.PsReq()
+            task_id = await self._queue_beacon_task(beacon_id, "Ps", req)
+            return {"task_id": task_id, "beacon_id": beacon_id}
         except Exception as e:
             raise SliverCommandError(f"Failed to queue ps task: {str(e)}")
 
     async def beacon_screenshot(self, beacon_id: str) -> dict:
         """Queue screenshot task on beacon"""
         try:
-            beacon = await self._client.interact_beacon(beacon_id)
-            task = await beacon.screenshot()
-            return {"task_id": task.TaskID, "beacon_id": beacon_id}
+            from sliver.protobuf import sliver_pb2 as _pb2
+            req = _pb2.ScreenshotReq()
+            task_id = await self._queue_beacon_task(beacon_id, "Screenshot", req)
+            return {"task_id": task_id, "beacon_id": beacon_id}
         except Exception as e:
             raise SliverCommandError(f"Failed to queue screenshot task: {str(e)}")
 
