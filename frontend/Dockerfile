@@ -1,5 +1,5 @@
 # Production Dockerfile for SliverUI Frontend
-FROM node:24-alpine AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 

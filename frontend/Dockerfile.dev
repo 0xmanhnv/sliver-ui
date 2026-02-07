@@ -1,5 +1,5 @@
 # Development Dockerfile for SliverUI Frontend
-FROM node:24-alpine
+FROM node:24-slim
 
 WORKDIR /app
 
